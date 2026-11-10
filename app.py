@@ -1,155 +1,135 @@
 import io
-import math
+from datetime import date
+from pathlib import Path
 import pandas as pd
 import plotly.graph_objects as go
+import requests
 import streamlit as st
 
-st.set_page_config(page_title="Luker Intelligence | Quality", page_icon="✦", layout="wide", initial_sidebar_state="collapsed")
-BG="#081422"; PANEL="#102238"; TEXT="#EAF4FF"; MUTED="#91AAC1"; TEAL="#55DAC9"; GOLD="#F2BD67"; RED="#FB7988"; BLUE="#78A9F7"
+st.set_page_config(page_title='DİNÇER | Temperature Intelligence',page_icon='◈',layout='wide',initial_sidebar_state='collapsed')
+NAVY='#091525'; PANEL='#13273d'; AQUA='#59dfd0'; GOLD='#f1b94e'; SKY='#71aaf2'; MUTED='#9db2c8'
 st.markdown('''<style>
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap');
-html,body,[class*="css"],.stApp{font-family:'DM Sans',sans-serif!important}
-.stApp{background:radial-gradient(ellipse at 78% 0%,#153350 0%,#081422 48%,#07111f 100%);color:#EAF4FF}
-[data-testid="stSidebar"]{background:#0C1B2E;border-right:1px solid #243951}
-.block-container{max-width:1540px;padding-top:2.2rem;padding-bottom:4rem}
-h1,h2,h3{font-family:'Manrope',sans-serif!important;color:#F1F8FF!important;letter-spacing:-.035em}
-h1{font-weight:800!important;font-size:2.45rem!important}h3{font-size:1.18rem!important}
-p,span,label{color:inherit} [data-testid="stCaptionContainer"]{color:#91AAC1!important}
-[data-testid="stMetric"]{background:linear-gradient(140deg,#152B43,#102238);border:1px solid #29445D;border-radius:18px;padding:19px 21px;box-shadow:0 14px 35px #02091440}
-[data-testid="stMetricLabel"]{color:#A3B8CB!important;font-weight:600}[data-testid="stMetricValue"]{color:#F5FBFF!important;font-family:'Manrope',sans-serif;font-weight:800}
-[data-testid="stMetricDelta"]{color:#55DAC9!important}
-[data-testid="stVerticalBlockBorderWrapper"]{border-color:#2B455D!important}
-.stButton>button,.stDownloadButton>button{border-radius:12px!important;background:#183C55!important;color:#DDFCF5!important;border:1px solid #397185!important;font-weight:700}
-.stButton>button:hover,.stDownloadButton>button:hover{background:#236177!important;border-color:#55DAC9!important}
-[data-testid="stFileUploader"]{border-radius:14px} [data-testid="stAlert"]{border-radius:13px}
-[data-testid="stDataFrame"]{border:1px solid #29445D;border-radius:14px;overflow:hidden}
-hr{border-color:#29445D!important}
-.hero{padding:28px 32px;border:1px solid #2D4C65;border-radius:24px;background:linear-gradient(110deg,#173B53,#10243B 65%,#112A41);margin-bottom:25px;box-shadow:0 20px 55px #00000025}
-.eyebrow{font-size:11px;letter-spacing:.22em;font-weight:800;color:#55DAC9}.hero-title{font-family:Manrope,sans-serif;font-size:35px;letter-spacing:-.05em;font-weight:800;color:#fff;margin:8px 0}.hero-sub{color:#AFC4D5;font-size:14px}.pill{display:inline-block;padding:7px 12px;background:#23546A;border:1px solid #3C8290;border-radius:100px;color:#9FF5E9;font-size:11px;font-weight:700;margin-top:17px}
-.section-label{font-size:11px;letter-spacing:.15em;font-weight:800;color:#78A9F7;margin:25px 0 8px}
+[data-testid="stSidebar"], [data-testid="collapsedControl"]{display:none!important}
+#MainMenu,footer,header[data-testid="stHeader"]{visibility:hidden;height:0}
+.stApp{background:radial-gradient(ellipse at 85% -15%,#163855 0%,#091525 48%);color:#edf5fc}
+.block-container{max-width:1480px;padding:1.15rem 2rem 3rem}
+html,body,[class*="css"]{font-family:Inter,system-ui,sans-serif}
+h1,h2,h3{letter-spacing:-.035em!important;color:#f0f7ff!important}
+h1{font-size:clamp(1.7rem,3vw,2.55rem)!important;margin:0!important}
+h3{font-size:1.05rem!important}
+[data-testid="stMetric"]{background:linear-gradient(150deg,#1a324c,#11243a);border:1px solid #2b455d;border-radius:17px;padding:18px;min-width:0}
+[data-testid="stMetricLabel"]{color:#a8c1d3!important;font-size:.78rem!important;letter-spacing:.025em}
+[data-testid="stMetricValue"]{font-size:clamp(1.35rem,2.4vw,2rem)!important;color:#fff!important;overflow-wrap:anywhere}
+[data-testid="stVerticalBlockBorderWrapper"]>div{border-color:#28445e!important;border-radius:16px!important}
+.stButton>button,.stDownloadButton>button{border-radius:12px;background:#183750;color:#e8f8ff;border:1px solid #38566c}
+.stButton>button:hover,.stDownloadButton>button:hover{border-color:#59dfd0;color:#59dfd0}
+[data-testid="stAlert"]{border-radius:12px}
+[data-testid="stDataFrame"]{border-radius:12px;overflow:hidden}
+@media(max-width:750px){.block-container{padding:1rem .85rem 2rem}[data-testid="stMetric"]{padding:12px}[data-testid="stMetricValue"]{font-size:1.35rem!important}}
 </style>''',unsafe_allow_html=True)
 
-@st.cache_data(show_spinner=False)
-def load_data(contents, name):
-    raw = pd.read_csv(io.BytesIO(contents)) if name.lower().endswith('.csv') else pd.read_excel(io.BytesIO(contents))
-    if raw.shape[1]<2: raise ValueError('At least two columns are required.')
-    cols=list(raw.columns)
-    dc=next((c for c in cols if 'date' in str(c).lower() or 'time' in str(c).lower()),cols[0])
-    tc=next((c for c in cols if 'sensor' in str(c).lower() or 'temp' in str(c).lower() or '°c' in str(c).lower()),cols[1])
-    if dc==tc: raise ValueError('Date and temperature columns must be different.')
-    df=raw[[dc,tc]].copy();df.columns=['timestamp','temperature']
-    if pd.api.types.is_numeric_dtype(df.timestamp): df['timestamp']=pd.to_datetime(df.timestamp,unit='D',origin='1899-12-30',errors='coerce')
-    else: df['timestamp']=pd.to_datetime(df.timestamp,errors='coerce',dayfirst=True)
-    df['temperature']=pd.to_numeric(df.temperature,errors='coerce')
-    return df.dropna().sort_values('timestamp').reset_index(drop=True)
+st.markdown('<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;border-bottom:1px solid #28435a;padding:4px 0 18px"><div style="font-weight:800;letter-spacing:.11em;color:#f0f8ff;font-size:1rem">◈ DİNÇER <span style="color:#59dfd0">INTELLIGENCE</span></div><div style="font-size:.76rem;color:#a2b8cc">QUALITY OPERATIONS · TEMPERATURE MONITORING</div></div>',unsafe_allow_html=True)
+page=st.radio('Navigation',['Overview','Temperature trends','London weather','Data & methodology'],horizontal=True,label_visibility='collapsed')
 
-def chart_style(fig,height=400):
-    fig.update_layout(height=height,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)',font=dict(color=MUTED,family='DM Sans'),margin=dict(l=12,r=16,t=24,b=32),hovermode='x unified',legend=dict(orientation='h',y=-.19,x=0,font=dict(size=11)),xaxis=dict(showgrid=False,zeroline=False),yaxis=dict(gridcolor='#294056',zeroline=False),uirevision='quality')
-    return fig
+@st.cache_data
 
-st.markdown("""<style>
-/* Responsive typography and clean full-width application */
-[data-testid="stSidebar"], [data-testid="collapsedControl"] {display:none!important}
-.block-container{max-width:1480px!important;padding:1.15rem clamp(1rem,3vw,2.5rem) 3rem!important}
-.hero{padding:clamp(16px,2.5vw,26px)!important;margin-bottom:16px!important}
-.hero-title{font-size:clamp(1.35rem,2.6vw,2.1rem)!important;line-height:1.2!important;overflow-wrap:anywhere}
-[data-testid="stMetric"]{padding:clamp(10px,1.3vw,18px)!important;min-width:0!important}
-[data-testid="stMetricValue"]{font-size:clamp(1.05rem,1.7vw,1.7rem)!important;line-height:1.3!important;overflow-wrap:anywhere}
-[data-testid="stMetricLabel"]{font-size:clamp(.72rem,.95vw,.9rem)!important;white-space:normal!important}
-[data-testid="stHorizontalBlock"] > div{min-width:0!important}
-[data-testid="stPlotlyChart"]{max-width:100%!important}
-.stTabs [data-baseweb="tab-list"]{gap:8px;flex-wrap:wrap}
-.stTabs [data-baseweb="tab"]{border-radius:12px;padding:9px 13px;font-size:.88rem}
-@media(max-width:900px){[data-testid="stMetricValue"]{font-size:1.2rem!important}.hero-sub{font-size:12px!important}}
-</style>""",unsafe_allow_html=True)
-st.markdown('<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0 16px;border-bottom:1px solid #29445D;margin-bottom:18px"><div style="font-weight:800;color:#f2f8ff;font-size:clamp(16px,2vw,22px);letter-spacing:-.03em">✦ LUKER <span style="color:#55DAC9">INTELLIGENCE</span></div><div style="color:#91AAC1;font-size:12px">QUALITY OPERATIONS</div></div>',unsafe_allow_html=True)
-page=st.segmented_control('Workspace',['Executive overview','Temperature intelligence','Daily performance','Data explorer'],default='Executive overview',label_visibility='collapsed')
-with st.expander('⚙ Data management & filters',expanded=False):
-    st.caption('Upload authorised Excel / CSV to analyse real measurements. Sample mode is clearly identified.')
-    uploaded=st.file_uploader('Upload authorised Excel / CSV',type=['xlsx','csv'])
-    demo=st.toggle('Explore sample data',value=True,disabled=uploaded is not None)
-    st.caption('Public hosting processes uploaded files. Obtain company authorisation before uploading operational records.')
+def read_reconstruction():
+ d=pd.read_csv(Path(__file__).parent/'data'/'chart_reconstruction.csv',parse_dates=['date']);return d
 
-if uploaded is not None:
-    try: df=load_data(uploaded.getvalue(),uploaded.name)
-    except Exception as e: st.error(f'Unable to parse file: {e}');st.stop()
-    source='UPLOADED MEASUREMENTS'; is_demo=False
-elif demo:
-    dates=pd.date_range('2026-10-01',periods=33,freq='D')
-    df=pd.DataFrame({'timestamp':dates,'temperature':[round(17.75+.45*math.sin(i*.72)+.17*math.cos(i*1.9),2) for i in range(len(dates))]})
-    source='SYNTHETIC SAMPLE · NOT REAL MEASUREMENTS';is_demo=True
+@st.cache_data(ttl=21600,show_spinner=False)
+def weather_data(lat,lon,first,last):
+ url='https://archive-api.open-meteo.com/v1/archive'
+ params={'latitude':lat,'longitude':lon,'start_date':str(first),'end_date':str(last),'hourly':'temperature_2m,apparent_temperature','timezone':'Europe/London'}
+ r=requests.get(url,params=params,timeout=25);r.raise_for_status();j=r.json()
+ h=j.get('hourly',{})
+ if not h.get('time'):raise ValueError('No hourly weather records returned')
+ d=pd.DataFrame({'timestamp':pd.to_datetime(h['time']),'outside_c':h['temperature_2m'],'feels_like_c':h['apparent_temperature']})
+ d['date']=d['timestamp'].dt.normalize()
+ return d.groupby('date',as_index=False)[['outside_c','feels_like_c']].mean()
+
+base=read_reconstruction()
+with st.expander('⚙ Data controls and source settings',expanded=False):
+ a,b,c=st.columns([2,1,1]);uploaded=a.file_uploader('Replace chart reconstruction with a sensor export (CSV / XLSX)',type=['csv','xlsx']);start=b.date_input('From',value=date(2026,10,1),min_value=date(2026,10,1),max_value=date(2026,11,10));end=c.date_input('To',value=date(2026,11,10),min_value=date(2026,10,1),max_value=date(2026,11,10))
+ st.caption('Weather reference: central London (51.5074, -0.1278). The chiller location may differ; weather is context, not an indoor measurement.')
+
+source='chart'
+if uploaded:
+ try:
+  d=pd.read_csv(io.BytesIO(uploaded.getvalue())) if uploaded.name.lower().endswith('.csv') else pd.read_excel(io.BytesIO(uploaded.getvalue()))
+  cols=list(d.columns);dc=next((x for x in cols if 'date' in str(x).lower() or 'time' in str(x).lower()),cols[0]);tc=next((x for x in cols if 'temp' in str(x).lower() or 'sensor' in str(x).lower() or '°c' in str(x).lower()),cols[1])
+  d=d[[dc,tc]].rename(columns={dc:'date',tc:'temperature_c'});d['date']=pd.to_datetime(d['date'],errors='coerce',dayfirst=True).dt.normalize();d['temperature_c']=pd.to_numeric(d['temperature_c'],errors='coerce');d=d.dropna()
+  if d.empty:raise ValueError('No valid sensor rows')
+  d=d.groupby('date',as_index=False)['temperature_c'].mean();d['series']='Uploaded sensor data';d['source_quality']='Uploaded file; source authenticity not independently verified';base=d;source='uploaded'
+ except Exception as exc:st.error(f'File could not be parsed: {exc}');st.stop()
+if start>end:st.warning('Start date must be before end date.');st.stop()
+df=base[(base.date.dt.date>=start)&(base.date.dt.date<=end)].copy()
+if df.empty:st.warning('No indoor readings for the selected period.');st.stop()
+try:
+ weather=weather_data(51.5074,-0.1278,start,end);weather_error=None
+except Exception as exc:
+ weather=pd.DataFrame(columns=['date','outside_c','feels_like_c']);weather_error=str(exc)
+merged=df.merge(weather,on='date',how='left')
+
+st.markdown('<div style="margin:18px 0 5px;color:#59dfd0;font-size:.73rem;font-weight:700;letter-spacing:.14em">OPERATIONS / PERFORMANCE</div>',unsafe_allow_html=True)
+st.title({'Overview':'Temperature performance overview','Temperature trends':'Chiller temperature trends','London weather':'London weather intelligence','Data & methodology':'Data management & methodology'}[page])
+st.caption(f'{start:%d %B} – {end:%d %B %Y}  ·  Target 18.0–20.0 °C  ·  {"Uploaded sensor file" if source=="uploaded" else "Chart-derived reconstruction"}')
+if source=='chart':
+ st.info('The indoor daily points are approximate values read from the supplied chart, not raw sensor readings. Original report KPIs: mean 17.30°C, minimum 15.8°C, below 18°C 80.5% (1 Oct–10 Nov). These report KPIs are not recomputed from the reconstruction.')
+if weather_error:st.warning('London weather is temporarily unavailable from Open-Meteo. Indoor data remains visible; no weather values have been substituted.')
+
+if page in ('Overview','Temperature trends'):
+ if source=='chart' and start==date(2026,10,1) and end==date(2026,11,10):
+  cards=[('Reported sensor mean','17.30°C'),('Reported minimum','15.8°C'),('Reported below target','80.5%'),('Chart period','41 days')]
+ else:
+  cards=[('Period mean*',f'{df.temperature_c.mean():.2f}°C'),('Period minimum*',f'{df.temperature_c.min():.1f}°C'),('Below 18°C*',f'{(df.temperature_c.lt(18).mean()*100):.1f}%'),('Days with data',f'{df.date.nunique()}')]
+ cs=st.columns(4)
+ for col,(label,val) in zip(cs,cards):col.metric(label,val)
+ if source=='chart' and (start!=date(2026,10,1) or end!=date(2026,11,10)):st.caption('* Calculated from chart-digitised approximate points, not raw sensor measurements.')
+ elif source=='uploaded':st.caption('* Calculated from the uploaded file.')
+
+fig=go.Figure()
+fig.add_hrect(y0=18,y1=20,fillcolor='rgba(89,223,208,.12)',line_width=0)
+fig.add_hline(y=18,line=dict(color='rgba(89,223,208,.65)',dash='dot',width=1))
+fig.add_hline(y=20,line=dict(color='rgba(89,223,208,.65)',dash='dot',width=1))
+for label,color in [('Historical sensor series',SKY),('Post-23 October series',GOLD),('Uploaded sensor data',SKY)]:
+ d=df[df.series==label]
+ if d.empty:continue
+ fig.add_trace(go.Scatter(x=d.date,y=d.temperature_c,mode='lines+markers',name=label,line=dict(color=color,width=3.3,shape='spline',smoothing=.65),marker=dict(size=5,color=color),hovertemplate='%{x|%d %b %Y}<br>%{y:.1f}°C<extra>'+label+'</extra>'))
+# Weather series are real API values; absent on error.
+for col,label,color in [('outside_c','London outdoor temperature',AQUA),('feels_like_c','London feels-like temperature','#c0a7ff')]:
+ if col in merged and merged[col].notna().any():
+  fig.add_trace(go.Scatter(x=merged.date,y=merged[col],name=label,mode='lines',line=dict(color=color,width=2.2,shape='spline',smoothing=.55,dash='dot'),hovertemplate='%{x|%d %b %Y}<br>%{y:.1f}°C<extra>'+label+'</extra>',visible=True if page=='London weather' else 'legendonly'))
+fig.update_layout(height=460,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)',font=dict(color='#bed0df',size=12),margin=dict(l=12,r=10,t=15,b=20),hovermode='x unified',legend=dict(orientation='h',y=-.2,x=0),xaxis=dict(showgrid=True,gridcolor='#243b51',title=''),yaxis=dict(showgrid=True,gridcolor='#243b51',title='Temperature (°C)'),uirevision='temperature')
+
+if page=='Overview':
+ st.subheader('Temperature & environmental context')
+ st.plotly_chart(fig,use_container_width=True)
+ l,r=st.columns([1,1])
+ with l:
+  st.subheader('Operational interpretation')
+  st.markdown('**Target:** 18–20 °C. The chart preserves the historical (blue) and post-23 October (amber) distinction. Compare London conditions by enabling the weather traces in the chart legend.')
+ with r:
+  st.subheader('Data reliability')
+  st.markdown('**Reported KPIs** come from the supplied figure. **Daily points** are visual reconstructions until original readings are uploaded. **London weather** comes from an external historical weather dataset.')
+elif page=='Temperature trends':
+ st.subheader('Daily evolution · smooth curve')
+ st.plotly_chart(fig,use_container_width=True)
+ st.caption('Spline smoothing affects the line drawing only; it does not create additional readings. Hover points to inspect the daily values.')
+elif page=='London weather':
+ st.subheader('Chiller vs London outdoor conditions')
+ st.plotly_chart(fig,use_container_width=True)
+ if not weather.empty:
+  cs=st.columns(3);cs[0].metric('London average outdoor',f'{weather.outside_c.mean():.1f}°C');cs[1].metric('London average feels-like',f'{weather.feels_like_c.mean():.1f}°C');cs[2].metric('Weather days',len(weather))
+ st.caption('Open-Meteo historical archive: hourly temperature_2m and apparent_temperature, aggregated to daily means in Europe/London time. These are gridded meteorological estimates, not direct warehouse sensor readings.')
 else:
-    st.info('Upload an authorised file or enable sample data to explore the dashboard.');st.stop()
-if df.empty: st.error('No valid readings found.');st.stop()
+ st.subheader('Source and audit trail')
+ st.markdown('**Chart-derived reconstruction:** approximate points transcribed from the supplied graphic, with two distinct series. **Reported summary:** 17.30°C mean, 15.8°C minimum, 80.5% below 18°C, as printed on the graphic. **Weather:** Open-Meteo archive API, central London coordinates, hourly data aggregated to daily averages. No missing values are fabricated.')
+ st.markdown('**To replace approximations with verified measurements:** upload the original sensor CSV/XLSX using the collapsed Data controls panel. The uploaded file is processed during this session and is not written to the project repository by this app.')
+ st.dataframe(merged,use_container_width=True,hide_index=True)
+ st.download_button('Download combined dataset (CSV)',merged.to_csv(index=False).encode('utf-8'),'dincer_temperature_london_combined.csv',mime='text/csv')
 
-df['date']=df.timestamp.dt.date
-first,last=df.date.min(),df.date.max()
-with st.expander('📅 Date and target controls',expanded=False):
-    chosen=st.date_input('Date range',value=(first,last),min_value=first,max_value=last)
-    low,high=st.slider('Target temperature (°C)',min_value=0.,max_value=35.,value=(18.,20.),step=.5)
-
-if isinstance(chosen,(tuple,list)) and len(chosen)==2: df=df.loc[df.date.between(chosen[0],chosen[1])].copy()
-if df.empty: st.warning('No readings for the selected dates.');st.stop()
-
-inside=df.temperature.between(low,high);below=df.temperature<low;above=df.temperature>high
-df['status']='Within target';df.loc[below,'status']='Below target';df.loc[above,'status']='Above target'
-daily=df.groupby('date',as_index=False).agg(readings=('temperature','size'),avg=('temperature','mean'),min=('temperature','min'),max=('temperature','max'))
-daily['within_pct']=df.assign(ok=inside).groupby('date')['ok'].mean().to_numpy()*100
-daily['below_pct']=df.assign(bad=below).groupby('date')['bad'].mean().to_numpy()*100
-st.markdown(f'''<div class="hero"><div class="eyebrow">QUALITY OPERATIONS / ANALYTICS SUITE</div><div class="hero-title">{page}</div><div class="hero-sub">Operational temperature intelligence · Interactive monitoring and performance analytics</div><div class="pill">{source}</div></div>''',unsafe_allow_html=True)
-if is_demo: st.warning('Sample mode: every measurement shown is synthetic. Upload an authorised source file to analyse actual readings.')
-else: st.success(f'{len(df):,} valid readings loaded from {uploaded.name}.')
-
-st.markdown('<div class="section-label">PERFORMANCE SNAPSHOT</div>',unsafe_allow_html=True)
-cols=st.columns(5,gap='small')
-for c,(label,value) in zip(cols,[('Average',f'{df.temperature.mean():.2f} °C'),('Minimum',f'{df.temperature.min():.2f} °C'),('Maximum',f'{df.temperature.max():.2f} °C'),('In target',f'{inside.mean()*100:.1f}%'),('Out of target',f'{(~inside).mean()*100:.1f}%')]): c.metric(label,value)
-st.caption(f'{len(df):,} readings  ·  {df.timestamp.min():%d %b %Y %H:%M} — {df.timestamp.max():%d %b %Y %H:%M}  ·  {df.date.nunique()} observed days  ·  Target {low:g}–{high:g} °C')
-
-if 'overview' in page or 'Temperature' in page:
-    st.markdown('<div class="section-label">MONITORING & DISTRIBUTION</div>',unsafe_allow_html=True)
-    left,right=st.columns([1.9,1],gap='large')
-    with left:
-        st.subheader('Temperature evolution')
-        view=st.segmented_control('Resolution',['Daily averages','Individual readings'],default='Daily averages',label_visibility='collapsed')
-        fig=go.Figure();fig.add_hrect(y0=low,y1=high,fillcolor='rgba(85,218,201,.11)',line_width=0)
-        fig.add_hline(y=low,line_dash='dot',line_color='#5B9E9D');fig.add_hline(y=high,line_dash='dot',line_color='#5B9E9D')
-        if view=='Daily averages':
-            fig.add_trace(go.Scatter(x=daily.date,y=daily.avg,name='Daily average',mode='lines+markers',line=dict(color=GOLD,width=3),marker=dict(size=6)))
-            fig.add_trace(go.Scatter(x=daily.date,y=daily['min'],name='Minimum',mode='lines',line=dict(color=BLUE,width=1.6,dash='dot')))
-            fig.add_trace(go.Scatter(x=daily.date,y=daily['max'],name='Maximum',mode='lines',line=dict(color=TEAL,width=1.6,dash='dot')))
-        else:
-            fig.add_trace(go.Scatter(x=df.timestamp,y=df.temperature,name='Sensor readings',mode='lines+markers',line=dict(color=GOLD,width=2),marker=dict(size=4)))
-        chart_style(fig,430);fig.update_yaxes(title_text='Temperature °C')
-        st.plotly_chart(fig,use_container_width=True)
-    with right:
-        st.subheader('Compliance profile')
-        vals=[int(below.sum()),int(inside.sum()),int(above.sum())]
-        donut=go.Figure(go.Pie(labels=[f'Below {low:g}°C','Within target',f'Above {high:g}°C'],values=vals,hole=.72,marker=dict(colors=[GOLD,TEAL,RED]),sort=False,textinfo='percent',hovertemplate='%{label}: %{value} readings<extra></extra>'))
-        donut.update_layout(annotations=[dict(text=f'<b>{inside.mean()*100:.1f}%</b><br><span style="font-size:12px">IN TARGET</span>',showarrow=False,font=dict(color=TEXT,size=23))],showlegend=True)
-        chart_style(donut,430);st.plotly_chart(donut,use_container_width=True)
-    if 'Temperature' in page:
-        st.subheader('Distribution of recorded temperatures')
-        hist=go.Figure(go.Histogram(x=df.temperature,marker_color=BLUE,opacity=.88,nbinsx=25))
-        hist.add_vrect(x0=low,x1=high,fillcolor='rgba(85,218,201,.12)',line_width=0)
-        chart_style(hist,340);hist.update_xaxes(title_text='Temperature °C');hist.update_yaxes(title_text='Readings')
-        st.plotly_chart(hist,use_container_width=True)
-
-if 'overview' in page or 'Daily' in page:
-    st.markdown('<div class="section-label">DAILY PERFORMANCE</div>',unsafe_allow_html=True)
-    st.subheader('Compliance by day')
-    fig=go.Figure(go.Bar(x=daily.date,y=daily.within_pct,marker_color=[TEAL if v>=90 else GOLD if v>=50 else RED for v in daily.within_pct],name='In target'))
-    chart_style(fig,330);fig.update_yaxes(title_text='In target %',range=[0,105]);st.plotly_chart(fig,use_container_width=True)
-    display=daily.rename(columns={'date':'Date','readings':'Readings','avg':'Average °C','min':'Minimum °C','max':'Maximum °C','within_pct':'In target %','below_pct':'Below target %'})
-    st.dataframe(display.style.format({'Average °C':'{:.2f}','Minimum °C':'{:.2f}','Maximum °C':'{:.2f}','In target %':'{:.1f}','Below target %':'{:.1f}'}),hide_index=True,use_container_width=True)
-
-if 'Data explorer' in page:
-    st.markdown('<div class="section-label">DATA EXPLORER</div>',unsafe_allow_html=True)
-    st.subheader('Individual measurements')
-    status=st.multiselect('Filter by status',['Within target','Below target','Above target'],default=['Within target','Below target','Above target'])
-    records=df.loc[df.status.isin(status),['timestamp','temperature','status']].rename(columns={'timestamp':'Timestamp','temperature':'Temperature °C','status':'Status'})
-    st.dataframe(records,use_container_width=True,hide_index=True,height=520)
-    st.download_button('↓ Download filtered measurements',records.to_csv(index=False).encode(),'temperature_measurements.csv','text/csv')
-
-st.divider()
-a,b=st.columns([2,1]);a.caption('Quality intelligence · Missing days are never imputed. Percentages are based on recorded readings, not elapsed time.')
-b.download_button('↓ Export daily statistics',daily.to_csv(index=False).encode(),'temperature_daily_statistics.csv','text/csv',use_container_width=True)
+if page!='Data & methodology':
+ with st.expander('View and export source table'):
+  st.dataframe(merged,use_container_width=True,hide_index=True)
+  st.download_button('Export selected period (CSV)',merged.to_csv(index=False).encode('utf-8'),'dincer_temperature_london.csv',mime='text/csv')
+st.markdown('<div style="border-top:1px solid #27435c;margin-top:30px;padding-top:14px;color:#8da7bc;font-size:.72rem">DİNÇER INTELLIGENCE · Quality Control · Source-aware analytics</div>',unsafe_allow_html=True)
