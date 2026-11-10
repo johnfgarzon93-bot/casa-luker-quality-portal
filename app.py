@@ -4,7 +4,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
-st.set_page_config(page_title="Luker Intelligence | Quality", page_icon="✦", layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(page_title="Luker Intelligence | Quality", page_icon="✦", layout="wide", initial_sidebar_state="collapsed")
 BG="#081422"; PANEL="#102238"; TEXT="#EAF4FF"; MUTED="#91AAC1"; TEAL="#55DAC9"; GOLD="#F2BD67"; RED="#FB7988"; BLUE="#78A9F7"
 st.markdown('''<style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap');
@@ -47,18 +47,28 @@ def chart_style(fig,height=400):
     fig.update_layout(height=height,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)',font=dict(color=MUTED,family='DM Sans'),margin=dict(l=12,r=16,t=24,b=32),hovermode='x unified',legend=dict(orientation='h',y=-.19,x=0,font=dict(size=11)),xaxis=dict(showgrid=False,zeroline=False),yaxis=dict(gridcolor='#294056',zeroline=False),uirevision='quality')
     return fig
 
-with st.sidebar:
-    st.markdown('### ✦ LUKER INTELLIGENCE')
-    st.caption('QUALITY OPERATIONS · ANALYTICS')
-    st.divider()
-    page=st.radio('WORKSPACE',['◈  Executive overview','⌁  Temperature intelligence','▦  Daily performance','≡  Data explorer'],label_visibility='collapsed')
-    st.divider()
-    st.markdown('#### DATA SOURCE')
+st.markdown("""<style>
+/* Responsive typography and clean full-width application */
+[data-testid="stSidebar"], [data-testid="collapsedControl"] {display:none!important}
+.block-container{max-width:1480px!important;padding:1.15rem clamp(1rem,3vw,2.5rem) 3rem!important}
+.hero{padding:clamp(16px,2.5vw,26px)!important;margin-bottom:16px!important}
+.hero-title{font-size:clamp(1.35rem,2.6vw,2.1rem)!important;line-height:1.2!important;overflow-wrap:anywhere}
+[data-testid="stMetric"]{padding:clamp(10px,1.3vw,18px)!important;min-width:0!important}
+[data-testid="stMetricValue"]{font-size:clamp(1.05rem,1.7vw,1.7rem)!important;line-height:1.3!important;overflow-wrap:anywhere}
+[data-testid="stMetricLabel"]{font-size:clamp(.72rem,.95vw,.9rem)!important;white-space:normal!important}
+[data-testid="stHorizontalBlock"] > div{min-width:0!important}
+[data-testid="stPlotlyChart"]{max-width:100%!important}
+.stTabs [data-baseweb="tab-list"]{gap:8px;flex-wrap:wrap}
+.stTabs [data-baseweb="tab"]{border-radius:12px;padding:9px 13px;font-size:.88rem}
+@media(max-width:900px){[data-testid="stMetricValue"]{font-size:1.2rem!important}.hero-sub{font-size:12px!important}}
+</style>""",unsafe_allow_html=True)
+st.markdown('<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0 16px;border-bottom:1px solid #29445D;margin-bottom:18px"><div style="font-weight:800;color:#f2f8ff;font-size:clamp(16px,2vw,22px);letter-spacing:-.03em">✦ LUKER <span style="color:#55DAC9">INTELLIGENCE</span></div><div style="color:#91AAC1;font-size:12px">QUALITY OPERATIONS</div></div>',unsafe_allow_html=True)
+page=st.segmented_control('Workspace',['Executive overview','Temperature intelligence','Daily performance','Data explorer'],default='Executive overview',label_visibility='collapsed')
+with st.expander('⚙ Data management & filters',expanded=False):
+    st.caption('Upload authorised Excel / CSV to analyse real measurements. Sample mode is clearly identified.')
     uploaded=st.file_uploader('Upload authorised Excel / CSV',type=['xlsx','csv'])
     demo=st.toggle('Explore sample data',value=True,disabled=uploaded is not None)
-    st.caption('Expected: date/time and temperature sensor columns.')
-    st.divider()
-    st.caption('Privacy: only upload company records with authorisation. Public hosting processes uploaded files.')
+    st.caption('Public hosting processes uploaded files. Obtain company authorisation before uploading operational records.')
 
 if uploaded is not None:
     try: df=load_data(uploaded.getvalue(),uploaded.name)
@@ -74,10 +84,10 @@ if df.empty: st.error('No valid readings found.');st.stop()
 
 df['date']=df.timestamp.dt.date
 first,last=df.date.min(),df.date.max()
-with st.sidebar:
-    st.markdown('#### FILTERS')
+with st.expander('📅 Date and target controls',expanded=False):
     chosen=st.date_input('Date range',value=(first,last),min_value=first,max_value=last)
     low,high=st.slider('Target temperature (°C)',min_value=0.,max_value=35.,value=(18.,20.),step=.5)
+
 if isinstance(chosen,(tuple,list)) and len(chosen)==2: df=df.loc[df.date.between(chosen[0],chosen[1])].copy()
 if df.empty: st.warning('No readings for the selected dates.');st.stop()
 
@@ -86,12 +96,12 @@ df['status']='Within target';df.loc[below,'status']='Below target';df.loc[above,
 daily=df.groupby('date',as_index=False).agg(readings=('temperature','size'),avg=('temperature','mean'),min=('temperature','min'),max=('temperature','max'))
 daily['within_pct']=df.assign(ok=inside).groupby('date')['ok'].mean().to_numpy()*100
 daily['below_pct']=df.assign(bad=below).groupby('date')['bad'].mean().to_numpy()*100
-st.markdown(f'''<div class="hero"><div class="eyebrow">QUALITY OPERATIONS / ANALYTICS SUITE</div><div class="hero-title">{page.split('  ',1)[-1]}</div><div class="hero-sub">Operational temperature intelligence · Interactive monitoring and performance analytics</div><div class="pill">{source}</div></div>''',unsafe_allow_html=True)
+st.markdown(f'''<div class="hero"><div class="eyebrow">QUALITY OPERATIONS / ANALYTICS SUITE</div><div class="hero-title">{page}</div><div class="hero-sub">Operational temperature intelligence · Interactive monitoring and performance analytics</div><div class="pill">{source}</div></div>''',unsafe_allow_html=True)
 if is_demo: st.warning('Sample mode: every measurement shown is synthetic. Upload an authorised source file to analyse actual readings.')
 else: st.success(f'{len(df):,} valid readings loaded from {uploaded.name}.')
 
 st.markdown('<div class="section-label">PERFORMANCE SNAPSHOT</div>',unsafe_allow_html=True)
-cols=st.columns(5)
+cols=st.columns(5,gap='small')
 for c,(label,value) in zip(cols,[('Average',f'{df.temperature.mean():.2f} °C'),('Minimum',f'{df.temperature.min():.2f} °C'),('Maximum',f'{df.temperature.max():.2f} °C'),('In target',f'{inside.mean()*100:.1f}%'),('Out of target',f'{(~inside).mean()*100:.1f}%')]): c.metric(label,value)
 st.caption(f'{len(df):,} readings  ·  {df.timestamp.min():%d %b %Y %H:%M} — {df.timestamp.max():%d %b %Y %H:%M}  ·  {df.date.nunique()} observed days  ·  Target {low:g}–{high:g} °C')
 
