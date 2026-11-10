@@ -1,4 +1,6 @@
 import io
+import base64
+import zlib
 from datetime import date
 from pathlib import Path
 import pandas as pd
@@ -34,7 +36,13 @@ page=st.radio('Navigation',['Overview','Temperature trends','London weather','Da
 @st.cache_data
 
 def read_reconstruction():
- d=pd.read_csv(Path(__file__).parent/'data'/'chart_reconstruction.csv',parse_dates=['date']);return d
+    # Self-contained fallback: deployed app works even if GitHub upload omits data/.
+    file_path = Path(__file__).resolve().parent / 'data' / 'chart_reconstruction.csv'
+    if file_path.is_file():
+        return pd.read_csv(file_path, parse_dates=['date'])
+    embedded = 'eNrF10FOwzAQBdA9EnfwAVLkcRInESt27OAGlUmGYimtg+2Icntip0hcAP9lpMavdWe+PZOJXEU+L+xNXD0fxyqwtxyq4FY/8vFzNbON3/d3Sip9IHmQVFH3oKtnG6LzdjSzCHwJzovbi0/L4t3VnreVhWcz2ctJTPZkow08iXfvziKsyzLb7Wn8MD6K7bMnfhQXF4U3X7/L8XVxPv6BVYJrAFyj4CbBCgC3CW4BsE5wA4C7BBMA7ivSkHYaEtyVh0mmrR4A8JZcPaKPSSUY0E6Uk6sHwA3okKAW1MekUzshqrpD9XFOLkRV5+QCHBJKgrZa5TsXAs7JBbiBqBp0SKhmj8xXF+L2LcTLGN0b/z/b7htdmtV7YZVmb5lVmu3Tr5XF2WGfHwqztYT8tzUBKpnyWJruWKXZHJCyOHuLx9IsIhwpj6P9duCXZjVmkztMSfWYvh32oawwuw+hxSr5BxzPvKY='
+    csv_bytes = zlib.decompress(base64.b64decode(embedded))
+    return pd.read_csv(io.BytesIO(csv_bytes), parse_dates=['date'])
 
 @st.cache_data(ttl=21600,show_spinner=False)
 def weather_data(lat,lon,first,last):
