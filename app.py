@@ -9,7 +9,7 @@ import requests
 import streamlit as st
 
 st.set_page_config(page_title='Casa Luker | Quality Intelligence',page_icon='◈',layout='wide',initial_sidebar_state='collapsed')
-NAVY='#091525'; PANEL='#13273d'; AQUA='#59dfd0'; GOLD='#f1b94e'; SKY='#71aaf2'; MUTED='#9db2c8'
+NAVY='#091525'; PANEL='#13273d'; AQUA='#59dfd0'; GOLD='#f1b94e'; SKY='#71aaf2'; MUTED='#ffffff'
 st.markdown('''<style>
 [data-testid="stSidebar"], [data-testid="collapsedControl"]{display:none!important}
 #MainMenu,footer,header[data-testid="stHeader"]{visibility:hidden;height:0}
@@ -20,17 +20,35 @@ h1,h2,h3{letter-spacing:-.035em!important;color:#f0f7ff!important}
 h1{font-size:clamp(1.7rem,3vw,2.55rem)!important;margin:0!important}
 h3{font-size:1.05rem!important}
 [data-testid="stMetric"]{background:linear-gradient(150deg,#1a324c,#11243a);border:1px solid #2b455d;border-radius:17px;padding:18px;min-width:0}
-[data-testid="stMetricLabel"]{color:#a8c1d3!important;font-size:.78rem!important;letter-spacing:.025em}
+[data-testid="stMetricLabel"]{color:#ffffff!important;font-size:.78rem!important;letter-spacing:.025em}
 [data-testid="stMetricValue"]{font-size:clamp(1.35rem,2.4vw,2rem)!important;color:#fff!important;overflow-wrap:anywhere}
 [data-testid="stVerticalBlockBorderWrapper"]>div{border-color:#28445e!important;border-radius:16px!important}
 .stButton>button,.stDownloadButton>button{border-radius:12px;background:#183750;color:#e8f8ff;border:1px solid #38566c}
 .stButton>button:hover,.stDownloadButton>button:hover{border-color:#59dfd0;color:#59dfd0}
 [data-testid="stAlert"]{border-radius:12px}
 [data-testid="stDataFrame"]{border-radius:12px;overflow:hidden}
+
+/* Consistent white typography across Streamlit components */
+.stApp, .stApp p, .stApp span, .stApp label, .stApp li,
+.stApp h1, .stApp h2, .stApp h3, .stApp h4,
+[data-testid="stMarkdownContainer"], [data-testid="stMarkdownContainer"] *,
+[data-testid="stCaptionContainer"], [data-testid="stCaptionContainer"] *,
+[data-testid="stMetricLabel"] *, [data-testid="stMetricValue"] *,
+[data-testid="stWidgetLabel"] *,
+[data-testid="stRadio"] label, [data-testid="stRadio"] label *,
+[data-testid="stExpander"] summary, [data-testid="stExpander"] summary *,
+[data-testid="stFileUploader"] label, [data-testid="stFileUploader"] small,
+[data-testid="stDataFrame"] label {color:#ffffff!important;opacity:1!important}
+.stApp input, .stApp textarea, .stApp select,
+.stApp button, .stApp button *, .stApp [role="button"] {color:#ffffff!important}
+.stApp input::placeholder, .stApp textarea::placeholder {color:#ffffff!important;opacity:.85!important}
+.stApp [data-testid="stMetric"] {overflow:hidden}
+.stApp [data-testid="stMetricValue"] {line-height:1.2!important}
+
 @media(max-width:750px){.block-container{padding:1rem .85rem 2rem}[data-testid="stMetric"]{padding:12px}[data-testid="stMetricValue"]{font-size:1.35rem!important}}
 </style>''',unsafe_allow_html=True)
 
-st.markdown('<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;border-bottom:1px solid #28435a;padding:4px 0 18px"><div style="font-weight:800;letter-spacing:.11em;color:#f0f8ff;font-size:1rem">🇨🇴 CASA LUKER <span style="color:#59dfd0">INTELLIGENCE</span> 🇬🇧</div><div style="font-size:.76rem;color:#a2b8cc">COLOMBIA × UNITED KINGDOM · QUALITY OPERATIONS</div></div>',unsafe_allow_html=True)
+st.markdown('<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;border-bottom:1px solid #28435a;padding:4px 0 18px"><div style="font-weight:800;letter-spacing:.11em;color:#f0f8ff;font-size:1rem"><img alt="Bandera de Colombia" title="Colombia" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDYwIDQwIj48cmVjdCB3aWR0aD0iNjAiIGhlaWdodD0iMjAiIGZpbGw9IiNGQ0QxMTYiLz48cmVjdCB5PSIyMCIgd2lkdGg9IjYwIiBoZWlnaHQ9IjEwIiBmaWxsPSIjMDAzODkzIi8+PHJlY3QgeT0iMzAiIHdpZHRoPSI2MCIgaGVpZ2h0PSIxMCIgZmlsbD0iI0NFMTEyNiIvPjwvc3ZnPg==" style="width:33px;height:22px;object-fit:cover;border-radius:3px;vertical-align:middle;margin-right:10px;box-shadow:0 0 0 1px #ffffff44"/> CASA LUKER <span style="color:#ffffff">INTELLIGENCE</span> <img alt="Bandera del Reino Unido" title="United Kingdom" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDYwIDQwIj48cmVjdCB3aWR0aD0iNjAiIGhlaWdodD0iNDAiIGZpbGw9IiMwMTIxNjkiLz48cGF0aCBkPSJNMCAwTDYwIDQwTTYwIDBMMCA0MCIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSI5Ii8+PHBhdGggZD0iTTAgMEw2MCA0ME02MCAwTDAgNDAiIHN0cm9rZT0iI0M4MTAyRSIgc3Ryb2tlLXdpZHRoPSI0Ii8+PHBhdGggZD0iTTMwIDBWNDBNMCAyMEg2MCIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIxMyIvPjxwYXRoIGQ9Ik0zMCAwVjQwTTAgMjBINjAiIHN0cm9rZT0iI0M4MTAyRSIgc3Ryb2tlLXdpZHRoPSI3Ii8+PC9zdmc+" style="width:33px;height:22px;object-fit:cover;border-radius:3px;vertical-align:middle;margin-left:10px;box-shadow:0 0 0 1px #ffffff44"/></div><div style="font-size:.76rem;color:#ffffff">COLOMBIA × UNITED KINGDOM · QUALITY OPERATIONS</div></div>',unsafe_allow_html=True)
 page=st.radio('Navigation',['Overview','Temperature trends','London weather','Data & methodology'],horizontal=True,label_visibility='collapsed')
 
 @st.cache_data
@@ -107,7 +125,7 @@ for label,color in [('Historical sensor series',SKY),('Post-23 October series',G
 for col,label,color in [('outside_c','London outdoor temperature',AQUA),('feels_like_c','London feels-like temperature','#c0a7ff')]:
  if col in merged and merged[col].notna().any():
   fig.add_trace(go.Scatter(x=merged.date,y=merged[col],name=label,mode='lines',line=dict(color=color,width=2.2,shape='spline',smoothing=.55,dash='dot'),hovertemplate='%{x|%d %b %Y}<br>%{y:.1f}°C<extra>'+label+'</extra>',visible=True if page=='London weather' else 'legendonly'))
-fig.update_layout(height=460,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)',font=dict(color='#bed0df',size=12),margin=dict(l=12,r=10,t=15,b=20),hovermode='x unified',legend=dict(orientation='h',y=-.2,x=0),xaxis=dict(showgrid=True,gridcolor='#243b51',title=''),yaxis=dict(showgrid=True,gridcolor='#243b51',title='Temperature (°C)'),uirevision='temperature')
+fig.update_layout(height=460,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)',font=dict(color='#ffffff',size=13),margin=dict(l=12,r=10,t=15,b=20),hovermode='x unified',legend=dict(orientation='h',y=-.2,x=0),xaxis=dict(showgrid=True,gridcolor='#243b51',title=''),yaxis=dict(showgrid=True,gridcolor='#243b51',title='Temperature (°C)'),uirevision='temperature')
 
 if page=='Overview':
  st.subheader('Temperature & environmental context')
@@ -130,7 +148,7 @@ if page=='Overview':
       hovertemplate='%{label}: %{value} days (%{percent})<extra></extra>'
   ))
   donut.update_layout(height=335,paper_bgcolor='rgba(0,0,0,0)',
-      font=dict(color='#e3effa'),margin=dict(l=0,r=0,t=10,b=5),
+      font=dict(color='#ffffff'),margin=dict(l=0,r=0,t=10,b=5),
       legend=dict(orientation='h',y=-.08,x=.02,font=dict(size=11)),
       annotations=[dict(text=f'{len(df)}<br><span style="font-size:11px">days</span>',
           x=.5,y=.5,showarrow=False,font=dict(size=25,color='#fff'))])
@@ -161,4 +179,4 @@ if page!='Data & methodology':
  with st.expander('View and export source table'):
   st.dataframe(merged,use_container_width=True,hide_index=True)
   st.download_button('Export selected period (CSV)',merged.to_csv(index=False).encode('utf-8'),'dincer_temperature_london.csv',mime='text/csv')
-st.markdown('<div style="border-top:1px solid #27435c;margin-top:30px;padding-top:14px;color:#8da7bc;font-size:.72rem">CASA LUKER INTELLIGENCE · DİNÇER Logistics · Source-aware analytics</div>',unsafe_allow_html=True)
+st.markdown('<div style="border-top:1px solid #27435c;margin-top:30px;padding-top:14px;color:#ffffff;font-size:.72rem">CASA LUKER INTELLIGENCE · DİNÇER Logistics · Source-aware analytics</div>',unsafe_allow_html=True)
