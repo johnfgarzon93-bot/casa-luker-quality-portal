@@ -118,7 +118,7 @@ except Exception as exc:
 merged=df.merge(weather,on='date',how='left')
 
 st.markdown('<div style="margin:18px 0 5px;color:#59dfd0;font-size:.73rem;font-weight:700;letter-spacing:.14em">OPERATIONS / PERFORMANCE</div>',unsafe_allow_html=True)
-st.title({'Overview':'Temperature performance overview','Temperature trends':'Chiller temperature trends','London weather':'London weather intelligence','Data & methodology':'Data management & methodology'}[page])
+st.title({'Overview':'Casa Luker | Executive Intelligence','Temperature trends':'Chiller temperature trends','London weather':'London weather intelligence','Data & methodology':'Data management & methodology'}[page])
 st.caption(f'{start:%d %B} – {end:%d %B %Y}  ·  Target 18.0–20.0 °C  ·  {"Uploaded sensor file" if source=="uploaded" else "Chart-derived reconstruction"}')
 if source=='chart':
  st.markdown('<div style="background:#17334a;border:1px solid #315570;border-left:4px solid #59dfd0;border-radius:12px;padding:13px 17px;color:#fff;font-size:.89rem;line-height:1.55"><b>REPORT SNAPSHOT</b> &nbsp; · &nbsp; Mean <b>17.30°C</b> &nbsp; · &nbsp; Minimum <b>15.8°C</b> &nbsp; · &nbsp; Below target <b>80.5%</b><div style="font-size:.78rem;color:#e6f1fa;margin-top:5px">Reported sensor KPIs · Daily trend reconstructed from supplied chart; exact daily sensor readings not available.</div></div>',unsafe_allow_html=True)
@@ -149,35 +149,61 @@ for col,label,color in [('outside_c','London outdoor temperature',AQUA),('feels_
 fig.update_layout(height=460,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)',font=dict(color='#ffffff',size=13),margin=dict(l=12,r=10,t=15,b=20),hovermode='x unified',legend=dict(orientation='h',y=-.23,x=0,font=dict(color='#ffffff',size=12),bgcolor='rgba(0,0,0,0)',itemclick='toggle',itemdoubleclick='toggleothers'),xaxis=dict(showgrid=True,gridcolor='#243b51',title=''),yaxis=dict(showgrid=True,gridcolor='#243b51',title='Temperature (°C)'),uirevision='temperature')
 
 if page=='Overview':
- st.subheader('Temperature & environmental context')
+ st.markdown('<div style="font-size:.8rem;letter-spacing:.12em;color:#59dfd0;font-weight:750;margin:8px 0 12px">LONDON WEATHER × CHILLER PERFORMANCE</div>',unsafe_allow_html=True)
+ if not weather.empty and weather['outside_c'].notna().any():
+  w1,w2,w3=st.columns(3)
+  w1.metric('London · outdoor mean',f"{weather['outside_c'].mean():.1f}°C")
+  w2.metric('London · feels-like mean',f"{weather['feels_like_c'].mean():.1f}°C" if weather['feels_like_c'].notna().any() else 'N/A')
+  w3.metric('London · available weather days',f"{weather['outside_c'].notna().sum()}")
+ else:
+  st.info('London weather data is unavailable for this period. The platform does not substitute estimated values.')
+ st.subheader('London weather and chiller · daily evolution')
+ for trace in fig.data:
+  if trace.name in ('London outdoor temperature','London feels-like temperature'):
+   trace.visible=True
  st.plotly_chart(fig,use_container_width=True)
- l,r=st.columns([1.12,1])
- with l:
-  st.subheader('Compliance breakdown')
+ st.caption('Chiller: chart-based daily series or uploaded sensor file · London: Open-Meteo historical daily averages. Hover to compare dates.')
+ st.subheader('Temperature distribution · side by side')
+ left,right=st.columns(2,gap='large')
+ def make_donut(labels,values,center,colors):
+  donut=go.Figure(go.Pie(
+   labels=labels,values=values,hole=.70,sort=False,
+   marker=dict(colors=colors,line=dict(color=NAVY,width=4)),
+   textinfo='percent',textfont=dict(color='#ffffff',size=14),
+   hovertemplate='%{label}<br>%{value} days · %{percent}<extra></extra>'
+  ))
+  donut.update_layout(
+   height=355,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)',
+   font=dict(color='#ffffff',size=13),margin=dict(l=5,r=5,t=8,b=48),
+   legend=dict(orientation='h',x=.5,xanchor='center',y=-.15,
+               font=dict(color='#ffffff',size=12),bgcolor='rgba(0,0,0,0)'),
+   annotations=[dict(text=center,x=.5,y=.5,showarrow=False,
+                     font=dict(color='#ffffff',size=22))]
+  )
+  return donut
+ with left:
+  st.markdown('#### Chiller · target compliance')
   below_n=int(df.temperature_c.lt(18).sum())
   within_n=int(df.temperature_c.between(18,20,inclusive='both').sum())
   above_n=int(df.temperature_c.gt(20).sum())
-  if source=='chart':
-   st.caption('Share of days in each temperature band · reconstructed daily trend.')
+  st.plotly_chart(make_donut(['Below 18°C','Within 18–20°C','Above 20°C'],
+      [below_n,within_n,above_n],f"{len(df)}<br><span style='font-size:12px'>days</span>",
+      [GOLD,AQUA,'#f17b85']),use_container_width=True)
+  st.caption('Distribution of daily points in the selected chiller series; not the 80.5% reported sensor-reading KPI.')
+ with right:
+  st.markdown('#### London · outdoor temperature')
+  wd=weather.dropna(subset=['outside_c']) if 'outside_c' in weather else pd.DataFrame()
+  if wd.empty:
+   st.info('Weather unavailable. No distribution can be calculated.')
   else:
-   st.caption('Share of days in each temperature band · uploaded sensor data.')
-  donut=go.Figure(go.Pie(
-      labels=['Below 18°C','Within 18–20°C','Above 20°C'],
-      values=[below_n,within_n,above_n],hole=.68,
-      marker=dict(colors=[GOLD,AQUA,'#f17b85'],line=dict(color=NAVY,width=3)),
-      textinfo='percent',textfont=dict(size=13,color='#f0f7ff'),
-      hovertemplate='%{label}: %{value} days (%{percent})<extra></extra>'
-  ))
-  donut.update_layout(height=335,paper_bgcolor='rgba(0,0,0,0)',
-      font=dict(color='#ffffff'),margin=dict(l=0,r=0,t=10,b=5),
-      legend=dict(orientation='h',y=-.12,x=.02,font=dict(size=12,color='#ffffff'),bgcolor='rgba(0,0,0,0)'),
-      annotations=[dict(text=f'{len(df)}<br><span style="font-size:11px">days</span>',
-          x=.5,y=.5,showarrow=False,font=dict(size=25,color='#fff'))])
-  st.plotly_chart(donut,use_container_width=True)
- with r:
-  st.subheader('Executive insight')
-  st.markdown('<div style="background:#132b40;border:1px solid #30506a;border-radius:14px;padding:17px 19px;color:#fff;line-height:1.7;font-size:1rem"><b style="color:#59dfd0">BELOW TARGET</b><div style="font-size:1.05rem;margin-top:8px">The reported sensor mean was <b>17.30°C</b>, below the <b>18–20°C</b> target. <b>80.5%</b> of reported sensor readings were below 18°C.</div><div style="font-size:.85rem;margin-top:10px;color:#e4eef8">Blue: historical sensor series · Amber: post-23 October continuation.</div></div>',unsafe_allow_html=True)
-  st.caption('Chart-based daily distribution is separate from the original reported sensor KPIs.')
+   low=int((wd.outside_c<18).sum())
+   mid=int(wd.outside_c.between(18,20,inclusive='both').sum())
+   high=int((wd.outside_c>20).sum())
+   st.plotly_chart(make_donut(['Below 18°C','18–20°C','Above 20°C'],
+       [low,mid,high],f"{len(wd)}<br><span style='font-size:12px'>days</span>",
+       [SKY,AQUA,'#c0a7ff']),use_container_width=True)
+   st.caption('Outdoor daily averages, using the same 18–20°C comparison bands for context; not a warehouse compliance target.')
+ st.markdown('<div style="background:#132b40;border:1px solid #30506a;border-radius:14px;padding:15px 20px;color:#ffffff;line-height:1.55;font-size:.94rem"><b style="color:#59dfd0">EXECUTIVE TAKEAWAY</b> · Reported chiller mean: <b>17.30°C</b> against an <b>18–20°C</b> target; <b>80.5%</b> of the original reported readings were below 18°C. London weather is an external benchmark, not a chiller measurement.</div>',unsafe_allow_html=True)
 elif page=='Temperature trends':
  st.subheader('Daily evolution · smooth curve')
  st.plotly_chart(fig,use_container_width=True)
