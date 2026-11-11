@@ -117,6 +117,21 @@ h3{font-size:1.05rem!important}
   .luker-weather-number{font-size:clamp(22px,6vw,32px)}
 }
 @media(max-width:340px){.luker-weather-pair{grid-template-columns:1fr}}
+
+/* Dedicated layouts, not two squeezed desktop columns */
+@media (min-width:761px){.st-key-mobile_trend{display:none!important}}
+@media (max-width:760px){
+ .st-key-desktop_trend{display:none!important}
+ .st-key-mobile_trend{display:block!important;width:100%!important;min-width:0!important}
+ .st-key-mobile_trend [data-testid="stPlotlyChart"]{width:100%!important;min-width:0!important}
+ .st-key-mobile_comparison [data-testid="stHorizontalBlock"]{display:flex!important;flex-direction:column!important;gap:20px!important;align-items:stretch!important}
+ .st-key-mobile_comparison [data-testid="stHorizontalBlock"]>[data-testid="stColumn"]{flex:none!important;width:100%!important;max-width:100%!important;min-width:0!important}
+ .st-key-mobile_comparison .luker-weather-pair{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ .st-key-mobile_comparison .luker-weather-card{padding:14px!important}
+ .st-key-mobile_comparison .luker-weather-number{font-size:clamp(24px,6.4vw,34px)!important}
+ .st-key-mobile_comparison [data-testid="stPlotlyChart"]{max-width:100%!important}
+ .st-key-mobile_comparison h4{font-size:1.12rem!important}
+}
 </style>''',unsafe_allow_html=True)
 
 st.markdown('<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;border-bottom:1px solid #28435a;padding:4px 0 18px"><div style="font-weight:800;letter-spacing:.11em;color:#f0f8ff;font-size:1rem"><img alt="Bandera de Colombia" title="Colombia" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDYwIDQwIj48cmVjdCB3aWR0aD0iNjAiIGhlaWdodD0iMjAiIGZpbGw9IiNGQ0QxMTYiLz48cmVjdCB5PSIyMCIgd2lkdGg9IjYwIiBoZWlnaHQ9IjEwIiBmaWxsPSIjMDAzODkzIi8+PHJlY3QgeT0iMzAiIHdpZHRoPSI2MCIgaGVpZ2h0PSIxMCIgZmlsbD0iI0NFMTEyNiIvPjwvc3ZnPg==" style="width:33px;height:22px;object-fit:cover;border-radius:3px;vertical-align:middle;margin-right:10px;box-shadow:0 0 0 1px #ffffff44"/> CASA LUKER <span style="color:#ffffff">INTELLIGENCE</span> <img alt="Bandera del Reino Unido" title="United Kingdom" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDYwIDQwIj48cmVjdCB3aWR0aD0iNjAiIGhlaWdodD0iNDAiIGZpbGw9IiMwMTIxNjkiLz48cGF0aCBkPSJNMCAwTDYwIDQwTTYwIDBMMCA0MCIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSI5Ii8+PHBhdGggZD0iTTAgMEw2MCA0ME02MCAwTDAgNDAiIHN0cm9rZT0iI0M4MTAyRSIgc3Ryb2tlLXdpZHRoPSI0Ii8+PHBhdGggZD0iTTMwIDBWNDBNMCAyMEg2MCIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIxMyIvPjxwYXRoIGQ9Ik0zMCAwVjQwTTAgMjBINjAiIHN0cm9rZT0iI0M4MTAyRSIgc3Ryb2tlLXdpZHRoPSI3Ii8+PC9zdmc+" style="width:33px;height:22px;object-fit:cover;border-radius:3px;vertical-align:middle;margin-left:10px;box-shadow:0 0 0 1px #ffffff44"/></div><div style="font-size:.76rem;color:#ffffff">COLOMBIA × UNITED KINGDOM · QUALITY OPERATIONS</div></div>',unsafe_allow_html=True)
@@ -200,70 +215,46 @@ for col,label,color in [('outside_c','London outdoor temperature',AQUA),('feels_
   fig.add_trace(go.Scatter(x=merged.date,y=merged[col],name=label,mode='lines',line=dict(color=color,width=2.2,shape='spline',smoothing=.55,dash='dot'),hovertemplate='%{x|%d %b %Y}<br>%{y:.1f}°C<extra>'+label+'</extra>',visible=True if page=='London weather' else 'legendonly'))
 fig.update_layout(autosize=True,height=430,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)',font=dict(color='#ffffff',size=13),margin=dict(l=12,r=10,t=15,b=20),hovermode='x unified',legend=dict(orientation='h',y=-.23,x=0,font=dict(color='#ffffff',size=12),bgcolor='rgba(0,0,0,0)',itemclick='toggle',itemdoubleclick='toggleothers'),xaxis=dict(showgrid=True,gridcolor='#243b51',title=''),yaxis=dict(showgrid=True,gridcolor='#243b51',title='Temperature (°C)'),uirevision='temperature')
 
+
+def show_responsive_trend():
+ with st.container(key='desktop_trend'):
+  show_responsive_trend()
+ with st.container(key='mobile_trend'):
+  st.markdown('<div style="color:#a7f1e8;font-size:.77rem;font-weight:750;letter-spacing:.07em;margin-bottom:8px">MOBILE TEMPERATURE EXPLORER</div>',unsafe_allow_html=True)
+  choice=st.selectbox('Compare temperatures', ['Chiller + London air','Chiller only','London air + feels-like','All four series'],key='mobile_chart_choice')
+  mobile_fig=go.Figure(fig)
+  for tr in mobile_fig.data:
+   name=tr.name
+   if choice=='Chiller + London air': show=name in ('Historical sensor series','Post-23 October series','Uploaded sensor data','London outdoor temperature')
+   elif choice=='Chiller only': show=name in ('Historical sensor series','Post-23 October series','Uploaded sensor data')
+   elif choice=='London air + feels-like': show=name in ('London outdoor temperature','London feels-like temperature')
+   else: show=True
+   tr.visible=True if show else False
+   tr.mode='lines' if name.startswith('London') else 'lines+markers'
+   if tr.line: tr.line.width=3.1 if not name.startswith('London') else 2.7
+   if 'marker' in tr and tr.marker:tr.marker.size=3
+  mobile_fig.update_layout(height=490,showlegend=False,margin=dict(l=5,r=6,t=20,b=32),
+   font=dict(color='#ffffff',size=12),hovermode='x',dragmode='pan',
+   xaxis=dict(title='',showgrid=True,gridcolor='#263e56',tickformat='%d %b',nticks=5,tickfont=dict(size=11,color='#fff')),
+   yaxis=dict(title='°C',showgrid=True,gridcolor='#263e56',tickfont=dict(size=11,color='#fff')))
+  st.plotly_chart(mobile_fig,use_container_width=True,config={'responsive':True,'displaylogo':False,'displayModeBar':False,'scrollZoom':False})
+  st.caption('Tap the line for the daily value · Select another comparison above.')
+
 if page=='Overview':
  st.markdown('<div style="height:28px"></div>',unsafe_allow_html=True)
  st.subheader('Chiller & London · Daily temperature trends')
  for trace in fig.data:
   if trace.name in ('London outdoor temperature','London feels-like temperature'):
    trace.visible=True
- st.plotly_chart(fig,use_container_width=True,config={'responsive':True,'displaylogo':False})
+ show_responsive_trend()
  st.caption('Chiller: chart-based daily series or uploaded sensor file · London: Open-Meteo historical daily averages. Hover to compare dates.')
- st.subheader('Chiller compliance & London weather averages')
- with st.container(key="mobile_comparison"):
-  left,right=st.columns(2,gap='large')
-  def make_donut(labels,values,center,colors):
-   donut=go.Figure(go.Pie(
-    labels=labels,values=values,hole=.70,sort=False,
-    marker=dict(colors=colors,line=dict(color=NAVY,width=4)),
-    textinfo='percent',textfont=dict(color='#ffffff',size=14),
-    hovertemplate='%{label}<br>%{value} days · %{percent}<extra></extra>'
-   ))
-   donut.update_layout(
-    height=355,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)',
-    font=dict(color='#ffffff',size=13),margin=dict(l=5,r=5,t=8,b=48),
-    legend=dict(orientation='h',x=.5,xanchor='center',y=-.15,
-                font=dict(color='#ffffff',size=12),bgcolor='rgba(0,0,0,0)'),
-    annotations=[dict(text=center,x=.5,y=.5,showarrow=False,
-                      font=dict(color='#ffffff',size=22))]
-   )
-   return donut
-  with left:
-   st.markdown('#### Chiller · target compliance')
-   below_n=int(df.temperature_c.lt(18).sum())
-   within_n=int(df.temperature_c.between(18,20,inclusive='both').sum())
-   above_n=int(df.temperature_c.gt(20).sum())
-   st.plotly_chart(make_donut(['Below 18°C','Within 18–20°C','Above 20°C'],
-       [below_n,within_n,above_n],f"{len(df)}<br><span style='font-size:12px'>days</span>",
-       [GOLD,AQUA,'#f17b85']),use_container_width=True,config={'responsive':True,'displaylogo':False})
-   st.caption('Distribution of daily points in the selected chiller series; not the 80.5% reported sensor-reading KPI.')
-  with right:
-   st.markdown('#### London · weather averages')
-   outdoor=weather['outside_c'].dropna() if 'outside_c' in weather.columns else pd.Series(dtype=float)
-   apparent=weather['feels_like_c'].dropna() if 'feels_like_c' in weather.columns else pd.Series(dtype=float)
-   if outdoor.empty or apparent.empty:
-    st.info('London weather data is unavailable for the selected dates. No values have been substituted.')
-   else:
-    air_mean=outdoor.mean()
-    feel_mean=apparent.mean()
-    difference=feel_mean-air_mean
-    st.markdown(f"""
-    <div class="luker-weather-card">
-      <div class="luker-weather-heading">LONDON · AVERAGE WEATHER</div>
-      <div class="luker-weather-pair">
-        <div class="luker-weather-stat"><div class="luker-weather-label">Air temperature</div><div class="luker-weather-number">{air_mean:.1f}°C</div><div class="luker-weather-small">Outdoor average</div></div>
-        <div class="luker-weather-stat"><div class="luker-weather-label">Feels-like</div><div class="luker-weather-number">{feel_mean:.1f}°C</div><div class="luker-weather-small">Apparent average</div></div>
-      </div>
-      <div class="luker-weather-bottom">Feels-like vs air: <b>{difference:+.1f}°C</b> · {len(outdoor)} days</div>
-    </div>""",unsafe_allow_html=True)
-    st.caption('Central London · Open-Meteo hourly observations aggregated into daily averages for the selected period.')
- st.markdown('<div style="background:#132b40;border:1px solid #30506a;border-radius:14px;padding:15px 20px;color:#ffffff;line-height:1.55;font-size:.94rem"><b style="color:#59dfd0">EXECUTIVE TAKEAWAY</b> · Reported chiller mean: <b>17.30°C</b> against an <b>18–20°C</b> target; <b>80.5%</b> of the original reported readings were below 18°C. London weather is an external benchmark, not a chiller measurement.</div>',unsafe_allow_html=True)
 elif page=='Temperature trends':
  st.subheader('Daily evolution · smooth curve')
- st.plotly_chart(fig,use_container_width=True,config={'responsive':True,'displaylogo':False})
+ show_responsive_trend()
  st.caption('Spline smoothing affects the line drawing only; it does not create additional readings. Hover points to inspect the daily values.')
 elif page=='London weather':
  st.subheader('Chiller vs London outdoor conditions')
- st.plotly_chart(fig,use_container_width=True,config={'responsive':True,'displaylogo':False})
+ show_responsive_trend()
  if not weather.empty:
   cs=st.columns(3);cs[0].metric('London average outdoor',f'{weather.outside_c.mean():.1f}°C');cs[1].metric('London average feels-like',f'{weather.feels_like_c.mean():.1f}°C');cs[2].metric('Weather days',len(weather))
  st.caption('Open-Meteo historical archive: hourly temperature_2m and apparent_temperature, aggregated to daily means in Europe/London time. These are gridded meteorological estimates, not direct warehouse sensor readings.')
@@ -273,6 +264,56 @@ else:
  st.markdown('**To replace approximations with verified measurements:** upload the original sensor CSV/XLSX using the collapsed Data controls panel. The uploaded file is processed during this session and is not written to the project repository by this app.')
  st.dataframe(merged,use_container_width=True,hide_index=True)
  st.download_button('Download combined dataset (CSV)',merged.to_csv(index=False).encode('utf-8'),'dincer_temperature_london_combined.csv',mime='text/csv')
+
+st.markdown('<div style="height:20px"></div>',unsafe_allow_html=True)
+st.subheader('Chiller compliance · London averages')
+with st.container(key="mobile_comparison"):
+ left,right=st.columns(2,gap='large')
+ def make_donut(labels,values,center,colors):
+  donut=go.Figure(go.Pie(
+   labels=labels,values=values,hole=.70,sort=False,
+   marker=dict(colors=colors,line=dict(color=NAVY,width=4)),
+   textinfo='percent',textfont=dict(color='#ffffff',size=14),
+   hovertemplate='%{label}<br>%{value} days · %{percent}<extra></extra>'
+  ))
+  donut.update_layout(
+   height=355,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)',
+   font=dict(color='#ffffff',size=13),margin=dict(l=5,r=5,t=8,b=48),
+   legend=dict(orientation='h',x=.5,xanchor='center',y=-.15,
+               font=dict(color='#ffffff',size=12),bgcolor='rgba(0,0,0,0)'),
+   annotations=[dict(text=center,x=.5,y=.5,showarrow=False,
+                     font=dict(color='#ffffff',size=22))]
+  )
+  return donut
+ with left:
+  st.markdown('#### Chiller · target compliance')
+  below_n=int(df.temperature_c.lt(18).sum())
+  within_n=int(df.temperature_c.between(18,20,inclusive='both').sum())
+  above_n=int(df.temperature_c.gt(20).sum())
+  st.plotly_chart(make_donut(['Below 18°C','Within 18–20°C','Above 20°C'],
+      [below_n,within_n,above_n],f"{len(df)}<br><span style='font-size:12px'>days</span>",
+      [GOLD,AQUA,'#f17b85']),use_container_width=True,config={'responsive':True,'displaylogo':False})
+  st.caption('Distribution of daily points in the selected chiller series; not the 80.5% reported sensor-reading KPI.')
+ with right:
+  st.markdown('#### London · weather averages')
+  outdoor=weather['outside_c'].dropna() if 'outside_c' in weather.columns else pd.Series(dtype=float)
+  apparent=weather['feels_like_c'].dropna() if 'feels_like_c' in weather.columns else pd.Series(dtype=float)
+  if outdoor.empty or apparent.empty:
+   st.info('London weather data is unavailable for the selected dates. No values have been substituted.')
+  else:
+   air_mean=outdoor.mean()
+   feel_mean=apparent.mean()
+   difference=feel_mean-air_mean
+   st.markdown(f"""
+   <div class="luker-weather-card">
+     <div class="luker-weather-heading">LONDON · AVERAGE WEATHER</div>
+     <div class="luker-weather-pair">
+       <div class="luker-weather-stat"><div class="luker-weather-label">Air temperature</div><div class="luker-weather-number">{air_mean:.1f}°C</div><div class="luker-weather-small">Outdoor average</div></div>
+       <div class="luker-weather-stat"><div class="luker-weather-label">Feels-like</div><div class="luker-weather-number">{feel_mean:.1f}°C</div><div class="luker-weather-small">Apparent average</div></div>
+     </div>
+     <div class="luker-weather-bottom">Feels-like vs air: <b>{difference:+.1f}°C</b> · {len(outdoor)} days</div>
+   </div>""",unsafe_allow_html=True)
+   st.caption('Central London · Open-Meteo hourly observations aggregated into daily averages for the selected period.')
 
 if page!='Data & methodology':
  with st.expander('View and export source table'):
