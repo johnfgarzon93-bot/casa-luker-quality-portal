@@ -120,7 +120,7 @@ merged=df.merge(weather,on='date',how='left')
 st.markdown('<div style="margin:18px 0 5px;color:#59dfd0;font-size:.73rem;font-weight:700;letter-spacing:.14em">OPERATIONS / PERFORMANCE</div>',unsafe_allow_html=True)
 st.title({'Overview':'Casa Luker | Executive Intelligence','Temperature trends':'Chiller temperature trends','London weather':'London weather intelligence','Data & methodology':'Data management & methodology'}[page])
 st.caption(f'{start:%d %B} – {end:%d %B %Y}  ·  Target 18.0–20.0 °C  ·  {"Uploaded sensor file" if source=="uploaded" else "Chart-derived reconstruction"}')
-if source=='chart':
+if source=='chart' and page!='Overview':
  st.markdown('<div style="background:#17334a;border:1px solid #315570;border-left:4px solid #59dfd0;border-radius:12px;padding:13px 17px;color:#fff;font-size:.89rem;line-height:1.55"><b>REPORT SNAPSHOT</b> &nbsp; · &nbsp; Mean <b>17.30°C</b> &nbsp; · &nbsp; Minimum <b>15.8°C</b> &nbsp; · &nbsp; Below target <b>80.5%</b><div style="font-size:.78rem;color:#e6f1fa;margin-top:5px">Reported sensor KPIs · Daily trend reconstructed from supplied chart; exact daily sensor readings not available.</div></div>',unsafe_allow_html=True)
 if weather_error:st.warning('London weather is temporarily unavailable from Open-Meteo. Indoor data remains visible; no weather values have been substituted.')
 
@@ -129,7 +129,8 @@ if page in ('Overview','Temperature trends'):
   cards=[('Reported sensor mean','17.30°C'),('Reported minimum','15.8°C'),('Reported below target','80.5%'),('Chart period','41 days')]
  else:
   cards=[('Period mean*',f'{df.temperature_c.mean():.2f}°C'),('Period minimum*',f'{df.temperature_c.min():.1f}°C'),('Below 18°C*',f'{(df.temperature_c.lt(18).mean()*100):.1f}%'),('Days with data',f'{df.date.nunique()}')]
- cs=st.columns(4)
+ st.markdown('<div style="height:24px"></div>',unsafe_allow_html=True)
+ cs=st.columns(4,gap='medium')
  for col,(label,val) in zip(cs,cards):col.metric(label,val)
  if source=='chart' and (start!=date(2026,10,1) or end!=date(2026,11,10)):st.caption('* Calculated from chart-digitised approximate points, not raw sensor measurements.')
  elif source=='uploaded':st.caption('* Calculated from the uploaded file.')
@@ -149,15 +150,8 @@ for col,label,color in [('outside_c','London outdoor temperature',AQUA),('feels_
 fig.update_layout(height=460,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)',font=dict(color='#ffffff',size=13),margin=dict(l=12,r=10,t=15,b=20),hovermode='x unified',legend=dict(orientation='h',y=-.23,x=0,font=dict(color='#ffffff',size=12),bgcolor='rgba(0,0,0,0)',itemclick='toggle',itemdoubleclick='toggleothers'),xaxis=dict(showgrid=True,gridcolor='#243b51',title=''),yaxis=dict(showgrid=True,gridcolor='#243b51',title='Temperature (°C)'),uirevision='temperature')
 
 if page=='Overview':
- st.markdown('<div style="font-size:.8rem;letter-spacing:.12em;color:#59dfd0;font-weight:750;margin:8px 0 12px">LONDON WEATHER × CHILLER PERFORMANCE</div>',unsafe_allow_html=True)
- if not weather.empty and weather['outside_c'].notna().any():
-  w1,w2,w3=st.columns(3)
-  w1.metric('London · outdoor mean',f"{weather['outside_c'].mean():.1f}°C")
-  w2.metric('London · feels-like mean',f"{weather['feels_like_c'].mean():.1f}°C" if weather['feels_like_c'].notna().any() else 'N/A')
-  w3.metric('London · available weather days',f"{weather['outside_c'].notna().sum()}")
- else:
-  st.info('London weather data is unavailable for this period. The platform does not substitute estimated values.')
- st.subheader('London weather and chiller · daily evolution')
+ st.markdown('<div style="height:28px"></div>',unsafe_allow_html=True)
+ st.subheader('Chiller & London · Daily temperature trends')
  for trace in fig.data:
   if trace.name in ('London outdoor temperature','London feels-like temperature'):
    trace.visible=True
