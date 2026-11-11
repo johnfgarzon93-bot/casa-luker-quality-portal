@@ -169,7 +169,15 @@ h3{font-size:1.05rem!important}
 .st-key-explorer_filters [data-testid="stRadio"] {margin-top:0!important;position:relative!important}
 .st-key-explorer_filters [data-testid="stWidgetLabel"] {margin-bottom:14px!important}
 .st-key-explorer_filters [data-testid="stWidgetLabel"] p {color:#fff!important;font-size:.95rem!important;font-weight:650!important}
-@media(max-width:760px){.st-key-explorer_heading{min-height:58px!important;margin-bottom:12px!important}.st-key-explorer_filters{padding-top:14px!important;margin-top:8px!important}}
+/* V10: reduce actual Streamlit block spacing, not only the text margins */
+@media(max-width:760px){
+ .st-key-mobile_trend .st-key-explorer_heading{min-height:0!important;margin:0!important;padding:0!important}
+ .st-key-mobile_trend .st-key-explorer_heading h3{margin:0!important;padding:0!important;line-height:1.35!important}
+ .st-key-mobile_trend .st-key-explorer_filters{margin:0!important;padding:0!important;min-height:0!important}
+ .st-key-mobile_trend [data-testid="stVerticalBlock"]:has(> .st-key-explorer_heading){gap:0.45rem!important}
+ .st-key-mobile_trend [data-testid="stVerticalBlock"]:has(> .st-key-explorer_filters){gap:0.45rem!important}
+ .st-key-mobile_trend .st-key-explorer_filters [data-testid="stWidgetLabel"]{margin-bottom:7px!important}
+}
 </style>''',unsafe_allow_html=True)
 
 st.markdown('<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;border-bottom:1px solid #28435a;padding:4px 0 18px"><div style="font-weight:800;letter-spacing:.11em;color:#f0f8ff;font-size:1rem"><img alt="Bandera de Colombia" title="Colombia" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDYwIDQwIj48cmVjdCB3aWR0aD0iNjAiIGhlaWdodD0iMjAiIGZpbGw9IiNGQ0QxMTYiLz48cmVjdCB5PSIyMCIgd2lkdGg9IjYwIiBoZWlnaHQ9IjEwIiBmaWxsPSIjMDAzODkzIi8+PHJlY3QgeT0iMzAiIHdpZHRoPSI2MCIgaGVpZ2h0PSIxMCIgZmlsbD0iI0NFMTEyNiIvPjwvc3ZnPg==" style="width:33px;height:22px;object-fit:cover;border-radius:3px;vertical-align:middle;margin-right:10px;box-shadow:0 0 0 1px #ffffff44"/> CASA LUKER <span style="color:#ffffff">INTELLIGENCE</span> <img alt="Bandera del Reino Unido" title="United Kingdom" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDYwIDQwIj48cmVjdCB3aWR0aD0iNjAiIGhlaWdodD0iNDAiIGZpbGw9IiMwMTIxNjkiLz48cGF0aCBkPSJNMCAwTDYwIDQwTTYwIDBMMCA0MCIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSI5Ii8+PHBhdGggZD0iTTAgMEw2MCA0ME02MCAwTDAgNDAiIHN0cm9rZT0iI0M4MTAyRSIgc3Ryb2tlLXdpZHRoPSI0Ii8+PHBhdGggZD0iTTMwIDBWNDBNMCAyMEg2MCIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIxMyIvPjxwYXRoIGQ9Ik0zMCAwVjQwTTAgMjBINjAiIHN0cm9rZT0iI0M4MTAyRSIgc3Ryb2tlLXdpZHRoPSI3Ii8+PC9zdmc+" style="width:33px;height:22px;object-fit:cover;border-radius:3px;vertical-align:middle;margin-left:10px;box-shadow:0 0 0 1px #ffffff44"/></div><div style="font-size:.76rem;color:#ffffff">COLOMBIA × UNITED KINGDOM · QUALITY OPERATIONS</div></div>',unsafe_allow_html=True)
@@ -261,7 +269,7 @@ def show_responsive_trend():
   with st.container(key='explorer_heading'):
    st.markdown('### MOBILE TEMPERATURE EXPLORER')
   with st.container(key='explorer_filters'):
-   choice=st.radio('Compare temperatures', ['Chiller + London air','Chiller only','London air + feels-like','All four series'],key='mobile_chart_choice',horizontal=False)
+   choice=st.radio('Compare temperatures', ['Chiller + London air','Chiller only','London air + feels-like','All four series'],key='mobile_chart_choice_v10',index=3,horizontal=False)
   mobile_fig=go.Figure(fig)
   for tr in mobile_fig.data:
    name=tr.name
