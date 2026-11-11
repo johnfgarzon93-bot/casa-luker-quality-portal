@@ -163,7 +163,7 @@ if page=='Overview':
    trace.visible=True
  st.plotly_chart(fig,use_container_width=True)
  st.caption('Chiller: chart-based daily series or uploaded sensor file · London: Open-Meteo historical daily averages. Hover to compare dates.')
- st.subheader('Temperature distribution · side by side')
+ st.subheader('Chiller compliance & London weather averages')
  left,right=st.columns(2,gap='large')
  def make_donut(labels,values,center,colors):
   donut=go.Figure(go.Pie(
@@ -191,18 +191,33 @@ if page=='Overview':
       [GOLD,AQUA,'#f17b85']),use_container_width=True)
   st.caption('Distribution of daily points in the selected chiller series; not the 80.5% reported sensor-reading KPI.')
  with right:
-  st.markdown('#### London · outdoor temperature')
-  wd=weather.dropna(subset=['outside_c']) if 'outside_c' in weather else pd.DataFrame()
-  if wd.empty:
-   st.info('Weather unavailable. No distribution can be calculated.')
+  st.markdown('#### London · weather averages')
+  outdoor=weather['outside_c'].dropna() if 'outside_c' in weather.columns else pd.Series(dtype=float)
+  apparent=weather['feels_like_c'].dropna() if 'feels_like_c' in weather.columns else pd.Series(dtype=float)
+  if outdoor.empty or apparent.empty:
+   st.info('London weather data is unavailable for the selected dates. No values have been substituted.')
   else:
-   low=int((wd.outside_c<18).sum())
-   mid=int(wd.outside_c.between(18,20,inclusive='both').sum())
-   high=int((wd.outside_c>20).sum())
-   st.plotly_chart(make_donut(['Below 18°C','18–20°C','Above 20°C'],
-       [low,mid,high],f"{len(wd)}<br><span style='font-size:12px'>days</span>",
-       [SKY,AQUA,'#c0a7ff']),use_container_width=True)
-   st.caption('Outdoor daily averages, using the same 18–20°C comparison bands for context; not a warehouse compliance target.')
+   air_mean=outdoor.mean()
+   feel_mean=apparent.mean()
+   difference=feel_mean-air_mean
+   st.markdown(f"""
+   <div style="background:linear-gradient(130deg,#193c58 0%,#10253b 90%);border:1px solid #40647c;border-radius:22px;padding:28px 26px;min-height:350px;color:white;box-shadow:0 12px 28px #020d1a40">
+    <div style="font-size:12px;letter-spacing:2px;font-weight:800;color:#72eadb">LONDON · AVERAGE WEATHER</div>
+    <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-top:25px">
+     <div style="background:#224863;border:1px solid #54748b;border-radius:17px;padding:19px 15px">
+      <div style="font-size:14px;color:#ffffff">🌡️ Air temperature</div>
+      <div style="font-size:clamp(27px,3vw,48px);font-weight:800;color:#ffffff;letter-spacing:-2px;margin:16px 0 8px">{air_mean:.1f}°C</div>
+      <div style="font-size:12px;color:#e3f3fa">Average outdoor</div>
+     </div>
+     <div style="background:#224863;border:1px solid #54748b;border-radius:17px;padding:19px 15px">
+      <div style="font-size:14px;color:#ffffff">💨 Feels-like</div>
+      <div style="font-size:clamp(27px,3vw,48px);font-weight:800;color:#ffffff;letter-spacing:-2px;margin:16px 0 8px">{feel_mean:.1f}°C</div>
+      <div style="font-size:12px;color:#e3f3fa">Average apparent</div>
+     </div>
+    </div>
+    <div style="border-top:1px solid #54748b;margin-top:24px;padding-top:16px;font-size:14px;color:#ffffff">Feels-like vs air: <b style="color:#72eadb">{difference:+.1f}°C</b> &nbsp; · &nbsp; {len(outdoor)} days of outdoor data</div>
+   </div>""",unsafe_allow_html=True)
+   st.caption('Central London · Open-Meteo hourly observations aggregated into daily averages for the selected period.')
  st.markdown('<div style="background:#132b40;border:1px solid #30506a;border-radius:14px;padding:15px 20px;color:#ffffff;line-height:1.55;font-size:.94rem"><b style="color:#59dfd0">EXECUTIVE TAKEAWAY</b> · Reported chiller mean: <b>17.30°C</b> against an <b>18–20°C</b> target; <b>80.5%</b> of the original reported readings were below 18°C. London weather is an external benchmark, not a chiller measurement.</div>',unsafe_allow_html=True)
 elif page=='Temperature trends':
  st.subheader('Daily evolution · smooth curve')
