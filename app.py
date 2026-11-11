@@ -218,7 +218,7 @@ fig.update_layout(autosize=True,height=430,paper_bgcolor='rgba(0,0,0,0)',plot_bg
 
 def show_responsive_trend():
  with st.container(key='desktop_trend'):
-  show_responsive_trend()
+  st.plotly_chart(fig, use_container_width=True, key='desktop_temperature_chart', config={'responsive':True,'displaylogo':False})
  with st.container(key='mobile_trend'):
   st.markdown('<div style="color:#a7f1e8;font-size:.77rem;font-weight:750;letter-spacing:.07em;margin-bottom:8px">MOBILE TEMPERATURE EXPLORER</div>',unsafe_allow_html=True)
   choice=st.selectbox('Compare temperatures', ['Chiller + London air','Chiller only','London air + feels-like','All four series'],key='mobile_chart_choice')
