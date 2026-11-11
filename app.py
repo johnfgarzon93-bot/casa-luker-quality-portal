@@ -154,6 +154,13 @@ h3{font-size:1.05rem!important}
 [data-baseweb="menu"] li:hover {background:#28516a!important;color:#fff!important}
 [data-baseweb="popover"] [role="option"] *,
 [data-baseweb="menu"] li * {color:#fff!important;opacity:1!important}
+
+/* Mobile temperature explorer: visible dark radio options instead of white select */
+.st-key-mobile_trend [data-testid="stRadio"] [role="radiogroup"]{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important;overflow:visible!important}
+.st-key-mobile_trend [data-testid="stRadio"] label{background:#1c3b55!important;border:1px solid #54788e!important;border-radius:11px!important;padding:12px 9px!important;min-width:0!important;white-space:normal!important}
+.st-key-mobile_trend [data-testid="stRadio"] label p{color:white!important;font-size:12px!important;line-height:1.3!important;white-space:normal!important}
+.st-key-mobile_trend [data-testid="stRadio"] label:has(input:checked){background:#22536c!important;border-color:#59dfd0!important}
+.st-key-mobile_trend [data-testid="stWidgetLabel"] p{color:#fff!important}
 </style>''',unsafe_allow_html=True)
 
 st.markdown('<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;border-bottom:1px solid #28435a;padding:4px 0 18px"><div style="font-weight:800;letter-spacing:.11em;color:#f0f8ff;font-size:1rem"><img alt="Bandera de Colombia" title="Colombia" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDYwIDQwIj48cmVjdCB3aWR0aD0iNjAiIGhlaWdodD0iMjAiIGZpbGw9IiNGQ0QxMTYiLz48cmVjdCB5PSIyMCIgd2lkdGg9IjYwIiBoZWlnaHQ9IjEwIiBmaWxsPSIjMDAzODkzIi8+PHJlY3QgeT0iMzAiIHdpZHRoPSI2MCIgaGVpZ2h0PSIxMCIgZmlsbD0iI0NFMTEyNiIvPjwvc3ZnPg==" style="width:33px;height:22px;object-fit:cover;border-radius:3px;vertical-align:middle;margin-right:10px;box-shadow:0 0 0 1px #ffffff44"/> CASA LUKER <span style="color:#ffffff">INTELLIGENCE</span> <img alt="Bandera del Reino Unido" title="United Kingdom" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDYwIDQwIj48cmVjdCB3aWR0aD0iNjAiIGhlaWdodD0iNDAiIGZpbGw9IiMwMTIxNjkiLz48cGF0aCBkPSJNMCAwTDYwIDQwTTYwIDBMMCA0MCIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSI5Ii8+PHBhdGggZD0iTTAgMEw2MCA0ME02MCAwTDAgNDAiIHN0cm9rZT0iI0M4MTAyRSIgc3Ryb2tlLXdpZHRoPSI0Ii8+PHBhdGggZD0iTTMwIDBWNDBNMCAyMEg2MCIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIxMyIvPjxwYXRoIGQ9Ik0zMCAwVjQwTTAgMjBINjAiIHN0cm9rZT0iI0M4MTAyRSIgc3Ryb2tlLXdpZHRoPSI3Ii8+PC9zdmc+" style="width:33px;height:22px;object-fit:cover;border-radius:3px;vertical-align:middle;margin-left:10px;box-shadow:0 0 0 1px #ffffff44"/></div><div style="font-size:.76rem;color:#ffffff">COLOMBIA × UNITED KINGDOM · QUALITY OPERATIONS</div></div>',unsafe_allow_html=True)
@@ -243,7 +250,7 @@ def show_responsive_trend():
   st.plotly_chart(fig, use_container_width=True, key='desktop_temperature_chart', config={'responsive':True,'displaylogo':False})
  with st.container(key='mobile_trend'):
   st.markdown('<div style="color:#a7f1e8;font-size:.77rem;font-weight:750;letter-spacing:.07em;margin-bottom:8px">MOBILE TEMPERATURE EXPLORER</div>',unsafe_allow_html=True)
-  choice=st.selectbox('Compare temperatures', ['Chiller + London air','Chiller only','London air + feels-like','All four series'],key='mobile_chart_choice')
+  choice=st.radio('Compare temperatures', ['Chiller + London air','Chiller only','London air + feels-like','All four series'],key='mobile_chart_choice',horizontal=False)
   mobile_fig=go.Figure(fig)
   for tr in mobile_fig.data:
    name=tr.name
