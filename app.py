@@ -8,7 +8,7 @@ import plotly.graph_objects as go
 import requests
 import streamlit as st
 
-st.set_page_config(page_title='DİNÇER | Temperature Intelligence',page_icon='◈',layout='wide',initial_sidebar_state='collapsed')
+st.set_page_config(page_title='Casa Luker | Quality Intelligence',page_icon='◈',layout='wide',initial_sidebar_state='collapsed')
 NAVY='#091525'; PANEL='#13273d'; AQUA='#59dfd0'; GOLD='#f1b94e'; SKY='#71aaf2'; MUTED='#9db2c8'
 st.markdown('''<style>
 [data-testid="stSidebar"], [data-testid="collapsedControl"]{display:none!important}
@@ -30,7 +30,7 @@ h3{font-size:1.05rem!important}
 @media(max-width:750px){.block-container{padding:1rem .85rem 2rem}[data-testid="stMetric"]{padding:12px}[data-testid="stMetricValue"]{font-size:1.35rem!important}}
 </style>''',unsafe_allow_html=True)
 
-st.markdown('<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;border-bottom:1px solid #28435a;padding:4px 0 18px"><div style="font-weight:800;letter-spacing:.11em;color:#f0f8ff;font-size:1rem">◈ DİNÇER <span style="color:#59dfd0">INTELLIGENCE</span></div><div style="font-size:.76rem;color:#a2b8cc">QUALITY OPERATIONS · TEMPERATURE MONITORING</div></div>',unsafe_allow_html=True)
+st.markdown('<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;border-bottom:1px solid #28435a;padding:4px 0 18px"><div style="font-weight:800;letter-spacing:.11em;color:#f0f8ff;font-size:1rem">🇨🇴 CASA LUKER <span style="color:#59dfd0">INTELLIGENCE</span> 🇬🇧</div><div style="font-size:.76rem;color:#a2b8cc">COLOMBIA × UNITED KINGDOM · QUALITY OPERATIONS</div></div>',unsafe_allow_html=True)
 page=st.radio('Navigation',['Overview','Temperature trends','London weather','Data & methodology'],horizontal=True,label_visibility='collapsed')
 
 @st.cache_data
@@ -112,13 +112,34 @@ fig.update_layout(height=460,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,
 if page=='Overview':
  st.subheader('Temperature & environmental context')
  st.plotly_chart(fig,use_container_width=True)
- l,r=st.columns([1,1])
+ l,r=st.columns([1.12,1])
  with l:
-  st.subheader('Operational interpretation')
-  st.markdown('**Target:** 18–20 °C. The chart preserves the historical (blue) and post-23 October (amber) distinction. Compare London conditions by enabling the weather traces in the chart legend.')
+  st.subheader('Compliance breakdown')
+  below_n=int(df.temperature_c.lt(18).sum())
+  within_n=int(df.temperature_c.between(18,20,inclusive='both').sum())
+  above_n=int(df.temperature_c.gt(20).sum())
+  if source=='chart':
+   st.caption('Distribution based on chart-reconstructed daily points; not the original sensor sample distribution.')
+  else:
+   st.caption('Distribution calculated from uploaded daily sensor averages.')
+  donut=go.Figure(go.Pie(
+      labels=['Below 18°C','Within 18–20°C','Above 20°C'],
+      values=[below_n,within_n,above_n],hole=.68,
+      marker=dict(colors=[GOLD,AQUA,'#f17b85'],line=dict(color=NAVY,width=3)),
+      textinfo='percent',textfont=dict(size=13,color='#f0f7ff'),
+      hovertemplate='%{label}: %{value} days (%{percent})<extra></extra>'
+  ))
+  donut.update_layout(height=335,paper_bgcolor='rgba(0,0,0,0)',
+      font=dict(color='#e3effa'),margin=dict(l=0,r=0,t=10,b=5),
+      legend=dict(orientation='h',y=-.08,x=.02,font=dict(size=11)),
+      annotations=[dict(text=f'{len(df)}<br><span style="font-size:11px">days</span>',
+          x=.5,y=.5,showarrow=False,font=dict(size=25,color='#fff'))])
+  st.plotly_chart(donut,use_container_width=True)
  with r:
+  st.subheader('Operational interpretation')
+  st.markdown('**Target:** 18–20 °C. Blue represents the historical sensor series; amber represents the post-23 October continuation. Enable London weather in the trend chart legend to compare outdoor conditions.')
   st.subheader('Data reliability')
-  st.markdown('**Reported KPIs** come from the supplied figure. **Daily points** are visual reconstructions until original readings are uploaded. **London weather** comes from an external historical weather dataset.')
+  st.markdown('**Reported KPIs** are transcribed from the supplied figure. **Daily points** are chart reconstructions until original sensor readings are provided. **London weather** comes from Open-Meteo.')
 elif page=='Temperature trends':
  st.subheader('Daily evolution · smooth curve')
  st.plotly_chart(fig,use_container_width=True)
@@ -140,4 +161,4 @@ if page!='Data & methodology':
  with st.expander('View and export source table'):
   st.dataframe(merged,use_container_width=True,hide_index=True)
   st.download_button('Export selected period (CSV)',merged.to_csv(index=False).encode('utf-8'),'dincer_temperature_london.csv',mime='text/csv')
-st.markdown('<div style="border-top:1px solid #27435c;margin-top:30px;padding-top:14px;color:#8da7bc;font-size:.72rem">DİNÇER INTELLIGENCE · Quality Control · Source-aware analytics</div>',unsafe_allow_html=True)
+st.markdown('<div style="border-top:1px solid #27435c;margin-top:30px;padding-top:14px;color:#8da7bc;font-size:.72rem">CASA LUKER INTELLIGENCE · DİNÇER Logistics · Source-aware analytics</div>',unsafe_allow_html=True)
