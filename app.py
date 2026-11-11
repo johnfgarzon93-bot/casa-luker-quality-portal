@@ -25,7 +25,10 @@ h3{font-size:1.05rem!important}
 [data-testid="stVerticalBlockBorderWrapper"]>div{border-color:#28445e!important;border-radius:16px!important}
 .stButton>button,.stDownloadButton>button{border-radius:12px;background:#183750;color:#e8f8ff;border:1px solid #38566c}
 .stButton>button:hover,.stDownloadButton>button:hover{border-color:#59dfd0;color:#59dfd0}
-[data-testid="stAlert"]{border-radius:12px}
+[data-testid="stAlert"]{border-radius:14px!important;background:#17334a!important;border:1px solid #315570!important;color:#fff!important}
+[data-testid="stAlert"] *,[data-testid="stAlert"] p,[data-testid="stAlert"] span{color:#fff!important;opacity:1!important}
+[data-testid="stAlert"] svg{fill:none!important;color:#65dfd1!important}
+/* Chart text is configured separately through Plotly layout. */
 [data-testid="stDataFrame"]{border-radius:12px;overflow:hidden}
 
 /* Consistent white typography across Streamlit components */
@@ -44,6 +47,24 @@ h3{font-size:1.05rem!important}
 .stApp input::placeholder, .stApp textarea::placeholder {color:#ffffff!important;opacity:.85!important}
 .stApp [data-testid="stMetric"] {overflow:hidden}
 .stApp [data-testid="stMetricValue"] {line-height:1.2!important}
+
+
+/* Control panel: no white-on-white, including Streamlit BaseWeb inputs */
+[data-testid="stExpander"] {background:#12283e!important;border:1px solid #35536c!important;border-radius:14px!important;overflow:hidden}
+[data-testid="stExpander"] details, [data-testid="stExpander"] summary {background:#12283e!important;color:#fff!important}
+[data-testid="stExpander"] summary:hover {background:#1c3951!important}
+[data-testid="stExpander"] summary *, [data-testid="stExpander"] summary svg {color:#fff!important;fill:currentColor!important}
+[data-testid="stFileUploaderDropzone"] {background:#1b344b!important;border:1px dashed #68869d!important;border-radius:12px!important}
+[data-testid="stFileUploaderDropzone"] *,[data-testid="stFileUploaderDropzone"] small {color:#fff!important;opacity:1!important}
+[data-testid="stFileUploaderDropzone"] button {background:#31516c!important;border:1px solid #86a5ba!important;color:#fff!important}
+[data-testid="stDateInput"] [data-baseweb="input"], [data-testid="stDateInput"] input,
+[data-testid="stDateInput"] [data-baseweb="base-input"],
+[data-testid="stDateInput"] [data-baseweb="input"]>div {background:#1b344b!important;color:#fff!important;border-color:#68869d!important}
+[data-testid="stDateInput"] input, [data-testid="stDateInput"] svg {color:#fff!important;fill:#fff!important;opacity:1!important}
+[data-testid="stDateInput"] input::placeholder {color:#e6eef7!important}
+[data-testid="stRadio"] label *, [data-testid="stRadio"] p {color:#fff!important;opacity:1!important}
+[data-testid="stRadio"] [role="radiogroup"] {gap:1.1rem!important}
+[data-testid="stRadio"] [role="radio"] {border-color:#d7e7f5!important}
 
 @media(max-width:750px){.block-container{padding:1rem .85rem 2rem}[data-testid="stMetric"]{padding:12px}[data-testid="stMetricValue"]{font-size:1.35rem!important}}
 </style>''',unsafe_allow_html=True)
@@ -74,9 +95,9 @@ def weather_data(lat,lon,first,last):
  return d.groupby('date',as_index=False)[['outside_c','feels_like_c']].mean()
 
 base=read_reconstruction()
-with st.expander('⚙ Data controls and source settings',expanded=False):
- a,b,c=st.columns([2,1,1]);uploaded=a.file_uploader('Replace chart reconstruction with a sensor export (CSV / XLSX)',type=['csv','xlsx']);start=b.date_input('From',value=date(2026,10,1),min_value=date(2026,10,1),max_value=date(2026,11,10));end=c.date_input('To',value=date(2026,11,10),min_value=date(2026,10,1),max_value=date(2026,11,10))
- st.caption('Weather reference: central London (51.5074, -0.1278). The chiller location may differ; weather is context, not an indoor measurement.')
+with st.expander('⚙ Filters & data upload',expanded=False):
+ a,b,c=st.columns([2,1,1]);uploaded=a.file_uploader('Upload sensor data (CSV / Excel)',type=['csv','xlsx']);start=b.date_input('From',value=date(2026,10,1),min_value=date(2026,10,1),max_value=date(2026,11,10));end=c.date_input('To',value=date(2026,11,10),min_value=date(2026,10,1),max_value=date(2026,11,10))
+ st.caption('Weather: Central London · Outdoor conditions are shown for comparison only.')
 
 source='chart'
 if uploaded:
@@ -100,7 +121,7 @@ st.markdown('<div style="margin:18px 0 5px;color:#59dfd0;font-size:.73rem;font-w
 st.title({'Overview':'Temperature performance overview','Temperature trends':'Chiller temperature trends','London weather':'London weather intelligence','Data & methodology':'Data management & methodology'}[page])
 st.caption(f'{start:%d %B} – {end:%d %B %Y}  ·  Target 18.0–20.0 °C  ·  {"Uploaded sensor file" if source=="uploaded" else "Chart-derived reconstruction"}')
 if source=='chart':
- st.info('The indoor daily points are approximate values read from the supplied chart, not raw sensor readings. Original report KPIs: mean 17.30°C, minimum 15.8°C, below 18°C 80.5% (1 Oct–10 Nov). These report KPIs are not recomputed from the reconstruction.')
+ st.markdown('<div style="background:#17334a;border:1px solid #315570;border-left:4px solid #59dfd0;border-radius:12px;padding:13px 17px;color:#fff;font-size:.89rem;line-height:1.55"><b>REPORT SNAPSHOT</b> &nbsp; · &nbsp; Mean <b>17.30°C</b> &nbsp; · &nbsp; Minimum <b>15.8°C</b> &nbsp; · &nbsp; Below target <b>80.5%</b><div style="font-size:.78rem;color:#e6f1fa;margin-top:5px">Reported sensor KPIs · Daily trend reconstructed from supplied chart; exact daily sensor readings not available.</div></div>',unsafe_allow_html=True)
 if weather_error:st.warning('London weather is temporarily unavailable from Open-Meteo. Indoor data remains visible; no weather values have been substituted.')
 
 if page in ('Overview','Temperature trends'):
@@ -125,7 +146,7 @@ for label,color in [('Historical sensor series',SKY),('Post-23 October series',G
 for col,label,color in [('outside_c','London outdoor temperature',AQUA),('feels_like_c','London feels-like temperature','#c0a7ff')]:
  if col in merged and merged[col].notna().any():
   fig.add_trace(go.Scatter(x=merged.date,y=merged[col],name=label,mode='lines',line=dict(color=color,width=2.2,shape='spline',smoothing=.55,dash='dot'),hovertemplate='%{x|%d %b %Y}<br>%{y:.1f}°C<extra>'+label+'</extra>',visible=True if page=='London weather' else 'legendonly'))
-fig.update_layout(height=460,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)',font=dict(color='#ffffff',size=13),margin=dict(l=12,r=10,t=15,b=20),hovermode='x unified',legend=dict(orientation='h',y=-.2,x=0),xaxis=dict(showgrid=True,gridcolor='#243b51',title=''),yaxis=dict(showgrid=True,gridcolor='#243b51',title='Temperature (°C)'),uirevision='temperature')
+fig.update_layout(height=460,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)',font=dict(color='#ffffff',size=13),margin=dict(l=12,r=10,t=15,b=20),hovermode='x unified',legend=dict(orientation='h',y=-.23,x=0,font=dict(color='#ffffff',size=12),bgcolor='rgba(0,0,0,0)',itemclick='toggle',itemdoubleclick='toggleothers'),xaxis=dict(showgrid=True,gridcolor='#243b51',title=''),yaxis=dict(showgrid=True,gridcolor='#243b51',title='Temperature (°C)'),uirevision='temperature')
 
 if page=='Overview':
  st.subheader('Temperature & environmental context')
@@ -137,9 +158,9 @@ if page=='Overview':
   within_n=int(df.temperature_c.between(18,20,inclusive='both').sum())
   above_n=int(df.temperature_c.gt(20).sum())
   if source=='chart':
-   st.caption('Distribution based on chart-reconstructed daily points; not the original sensor sample distribution.')
+   st.caption('Share of days in each temperature band · reconstructed daily trend.')
   else:
-   st.caption('Distribution calculated from uploaded daily sensor averages.')
+   st.caption('Share of days in each temperature band · uploaded sensor data.')
   donut=go.Figure(go.Pie(
       labels=['Below 18°C','Within 18–20°C','Above 20°C'],
       values=[below_n,within_n,above_n],hole=.68,
@@ -149,15 +170,14 @@ if page=='Overview':
   ))
   donut.update_layout(height=335,paper_bgcolor='rgba(0,0,0,0)',
       font=dict(color='#ffffff'),margin=dict(l=0,r=0,t=10,b=5),
-      legend=dict(orientation='h',y=-.08,x=.02,font=dict(size=11)),
+      legend=dict(orientation='h',y=-.12,x=.02,font=dict(size=12,color='#ffffff'),bgcolor='rgba(0,0,0,0)'),
       annotations=[dict(text=f'{len(df)}<br><span style="font-size:11px">days</span>',
           x=.5,y=.5,showarrow=False,font=dict(size=25,color='#fff'))])
   st.plotly_chart(donut,use_container_width=True)
  with r:
-  st.subheader('Operational interpretation')
-  st.markdown('**Target:** 18–20 °C. Blue represents the historical sensor series; amber represents the post-23 October continuation. Enable London weather in the trend chart legend to compare outdoor conditions.')
-  st.subheader('Data reliability')
-  st.markdown('**Reported KPIs** are transcribed from the supplied figure. **Daily points** are chart reconstructions until original sensor readings are provided. **London weather** comes from Open-Meteo.')
+  st.subheader('Executive insight')
+  st.markdown('<div style="background:#132b40;border:1px solid #30506a;border-radius:14px;padding:17px 19px;color:#fff;line-height:1.7;font-size:1rem"><b style="color:#59dfd0">BELOW TARGET</b><div style="font-size:1.05rem;margin-top:8px">The reported sensor mean was <b>17.30°C</b>, below the <b>18–20°C</b> target. <b>80.5%</b> of reported sensor readings were below 18°C.</div><div style="font-size:.85rem;margin-top:10px;color:#e4eef8">Blue: historical sensor series · Amber: post-23 October continuation.</div></div>',unsafe_allow_html=True)
+  st.caption('Chart-based daily distribution is separate from the original reported sensor KPIs.')
 elif page=='Temperature trends':
  st.subheader('Daily evolution · smooth curve')
  st.plotly_chart(fig,use_container_width=True)
