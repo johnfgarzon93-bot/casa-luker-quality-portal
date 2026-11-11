@@ -66,7 +66,39 @@ h3{font-size:1.05rem!important}
 [data-testid="stRadio"] [role="radiogroup"] {gap:1.1rem!important}
 [data-testid="stRadio"] [role="radio"] {border-color:#d7e7f5!important}
 
-@media(max-width:750px){.block-container{padding:1rem .85rem 2rem}[data-testid="stMetric"]{padding:12px}[data-testid="stMetricValue"]{font-size:1.35rem!important}}
+/* Responsive mobile presentation: retain the desktop experience above 760px */
+@media(max-width:760px){
+ html,body,.stApp{font-size:16px!important}
+ .block-container{padding:1.2rem .8rem 2.5rem!important;max-width:100%!important}
+ h1{font-size:1.65rem!important;line-height:1.16!important;overflow-wrap:anywhere}
+ h2{font-size:1.25rem!important;line-height:1.3!important}
+ h3{font-size:1.1rem!important}
+ [data-testid="stCaptionContainer"]{font-size:.82rem!important;line-height:1.45!important}
+ [data-testid="stMetric"]{padding:13px 11px!important;border-radius:13px!important;height:100%}
+ [data-testid="stMetricLabel"]{font-size:.79rem!important;line-height:1.25!important}
+ [data-testid="stMetricValue"]{font-size:clamp(1.25rem,5vw,1.65rem)!important;white-space:normal!important}
+ /* KPI cards become a compact 2x2 grid on phones */
+ .st-key-kpi_mobile [data-testid="stHorizontalBlock"]{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}
+ .st-key-kpi_mobile [data-testid="stHorizontalBlock"]>[data-testid="stColumn"]{width:auto!important;min-width:0!important;flex:none!important}
+ /* Charts and weather cards stack vertically and use the full available width */
+ [data-testid="stHorizontalBlock"]>[data-testid="stColumn"]{min-width:0!important}
+ [data-testid="stPlotlyChart"],.js-plotly-plot,.plot-container{max-width:100%!important}
+ [data-testid="stPlotlyChart"]{overflow:hidden}
+ /* Navigation remains usable without tiny text */
+ [data-testid="stRadio"] [role="radiogroup"]{display:flex!important;flex-wrap:nowrap!important;gap:14px!important;overflow-x:auto!important;padding-bottom:9px!important;scrollbar-width:thin}
+ [data-testid="stRadio"] label{white-space:nowrap!important;flex-shrink:0!important}
+ [data-testid="stRadio"] label p{font-size:.87rem!important}
+ [data-testid="stFileUploaderDropzone"]{padding:12px!important}
+ [data-testid="stDateInput"] input{font-size:16px!important}
+ [data-testid="stExpander"]{margin-top:8px!important}
+ .stApp button{min-height:38px}
+}
+@media(max-width:380px){
+ .block-container{padding-left:.6rem!important;padding-right:.6rem!important}
+ .st-key-kpi_mobile [data-testid="stHorizontalBlock"]{gap:8px!important}
+ [data-testid="stMetricValue"]{font-size:1.2rem!important}
+}
+
 </style>''',unsafe_allow_html=True)
 
 st.markdown('<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;border-bottom:1px solid #28435a;padding:4px 0 18px"><div style="font-weight:800;letter-spacing:.11em;color:#f0f8ff;font-size:1rem"><img alt="Bandera de Colombia" title="Colombia" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDYwIDQwIj48cmVjdCB3aWR0aD0iNjAiIGhlaWdodD0iMjAiIGZpbGw9IiNGQ0QxMTYiLz48cmVjdCB5PSIyMCIgd2lkdGg9IjYwIiBoZWlnaHQ9IjEwIiBmaWxsPSIjMDAzODkzIi8+PHJlY3QgeT0iMzAiIHdpZHRoPSI2MCIgaGVpZ2h0PSIxMCIgZmlsbD0iI0NFMTEyNiIvPjwvc3ZnPg==" style="width:33px;height:22px;object-fit:cover;border-radius:3px;vertical-align:middle;margin-right:10px;box-shadow:0 0 0 1px #ffffff44"/> CASA LUKER <span style="color:#ffffff">INTELLIGENCE</span> <img alt="Bandera del Reino Unido" title="United Kingdom" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDYwIDQwIj48cmVjdCB3aWR0aD0iNjAiIGhlaWdodD0iNDAiIGZpbGw9IiMwMTIxNjkiLz48cGF0aCBkPSJNMCAwTDYwIDQwTTYwIDBMMCA0MCIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSI5Ii8+PHBhdGggZD0iTTAgMEw2MCA0ME02MCAwTDAgNDAiIHN0cm9rZT0iI0M4MTAyRSIgc3Ryb2tlLXdpZHRoPSI0Ii8+PHBhdGggZD0iTTMwIDBWNDBNMCAyMEg2MCIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIxMyIvPjxwYXRoIGQ9Ik0zMCAwVjQwTTAgMjBINjAiIHN0cm9rZT0iI0M4MTAyRSIgc3Ryb2tlLXdpZHRoPSI3Ii8+PC9zdmc+" style="width:33px;height:22px;object-fit:cover;border-radius:3px;vertical-align:middle;margin-left:10px;box-shadow:0 0 0 1px #ffffff44"/></div><div style="font-size:.76rem;color:#ffffff">COLOMBIA × UNITED KINGDOM · QUALITY OPERATIONS</div></div>',unsafe_allow_html=True)
@@ -130,8 +162,9 @@ if page in ('Overview','Temperature trends'):
  else:
   cards=[('Period mean*',f'{df.temperature_c.mean():.2f}°C'),('Period minimum*',f'{df.temperature_c.min():.1f}°C'),('Below 18°C*',f'{(df.temperature_c.lt(18).mean()*100):.1f}%'),('Days with data',f'{df.date.nunique()}')]
  st.markdown('<div style="height:24px"></div>',unsafe_allow_html=True)
- cs=st.columns(4,gap='medium')
- for col,(label,val) in zip(cs,cards):col.metric(label,val)
+ with st.container(key='kpi_mobile'):
+  cs=st.columns(4,gap='medium')
+  for col,(label,val) in zip(cs,cards):col.metric(label,val)
  if source=='chart' and (start!=date(2026,10,1) or end!=date(2026,11,10)):st.caption('* Calculated from chart-digitised approximate points, not raw sensor measurements.')
  elif source=='uploaded':st.caption('* Calculated from the uploaded file.')
 
@@ -147,7 +180,7 @@ for label,color in [('Historical sensor series',SKY),('Post-23 October series',G
 for col,label,color in [('outside_c','London outdoor temperature',AQUA),('feels_like_c','London feels-like temperature','#c0a7ff')]:
  if col in merged and merged[col].notna().any():
   fig.add_trace(go.Scatter(x=merged.date,y=merged[col],name=label,mode='lines',line=dict(color=color,width=2.2,shape='spline',smoothing=.55,dash='dot'),hovertemplate='%{x|%d %b %Y}<br>%{y:.1f}°C<extra>'+label+'</extra>',visible=True if page=='London weather' else 'legendonly'))
-fig.update_layout(height=460,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)',font=dict(color='#ffffff',size=13),margin=dict(l=12,r=10,t=15,b=20),hovermode='x unified',legend=dict(orientation='h',y=-.23,x=0,font=dict(color='#ffffff',size=12),bgcolor='rgba(0,0,0,0)',itemclick='toggle',itemdoubleclick='toggleothers'),xaxis=dict(showgrid=True,gridcolor='#243b51',title=''),yaxis=dict(showgrid=True,gridcolor='#243b51',title='Temperature (°C)'),uirevision='temperature')
+fig.update_layout(autosize=True,height=430,paper_bgcolor='rgba(0,0,0,0)',plot_bgcolor='rgba(0,0,0,0)',font=dict(color='#ffffff',size=13),margin=dict(l=12,r=10,t=15,b=20),hovermode='x unified',legend=dict(orientation='h',y=-.23,x=0,font=dict(color='#ffffff',size=12),bgcolor='rgba(0,0,0,0)',itemclick='toggle',itemdoubleclick='toggleothers'),xaxis=dict(showgrid=True,gridcolor='#243b51',title=''),yaxis=dict(showgrid=True,gridcolor='#243b51',title='Temperature (°C)'),uirevision='temperature')
 
 if page=='Overview':
  st.markdown('<div style="height:28px"></div>',unsafe_allow_html=True)
@@ -155,7 +188,7 @@ if page=='Overview':
  for trace in fig.data:
   if trace.name in ('London outdoor temperature','London feels-like temperature'):
    trace.visible=True
- st.plotly_chart(fig,use_container_width=True)
+ st.plotly_chart(fig,use_container_width=True,config={'responsive':True,'displaylogo':False})
  st.caption('Chiller: chart-based daily series or uploaded sensor file · London: Open-Meteo historical daily averages. Hover to compare dates.')
  st.subheader('Chiller compliance & London weather averages')
  left,right=st.columns(2,gap='large')
@@ -182,7 +215,7 @@ if page=='Overview':
   above_n=int(df.temperature_c.gt(20).sum())
   st.plotly_chart(make_donut(['Below 18°C','Within 18–20°C','Above 20°C'],
       [below_n,within_n,above_n],f"{len(df)}<br><span style='font-size:12px'>days</span>",
-      [GOLD,AQUA,'#f17b85']),use_container_width=True)
+      [GOLD,AQUA,'#f17b85']),use_container_width=True,config={'responsive':True,'displaylogo':False})
   st.caption('Distribution of daily points in the selected chiller series; not the 80.5% reported sensor-reading KPI.')
  with right:
   st.markdown('#### London · weather averages')
@@ -215,11 +248,11 @@ if page=='Overview':
  st.markdown('<div style="background:#132b40;border:1px solid #30506a;border-radius:14px;padding:15px 20px;color:#ffffff;line-height:1.55;font-size:.94rem"><b style="color:#59dfd0">EXECUTIVE TAKEAWAY</b> · Reported chiller mean: <b>17.30°C</b> against an <b>18–20°C</b> target; <b>80.5%</b> of the original reported readings were below 18°C. London weather is an external benchmark, not a chiller measurement.</div>',unsafe_allow_html=True)
 elif page=='Temperature trends':
  st.subheader('Daily evolution · smooth curve')
- st.plotly_chart(fig,use_container_width=True)
+ st.plotly_chart(fig,use_container_width=True,config={'responsive':True,'displaylogo':False})
  st.caption('Spline smoothing affects the line drawing only; it does not create additional readings. Hover points to inspect the daily values.')
 elif page=='London weather':
  st.subheader('Chiller vs London outdoor conditions')
- st.plotly_chart(fig,use_container_width=True)
+ st.plotly_chart(fig,use_container_width=True,config={'responsive':True,'displaylogo':False})
  if not weather.empty:
   cs=st.columns(3);cs[0].metric('London average outdoor',f'{weather.outside_c.mean():.1f}°C');cs[1].metric('London average feels-like',f'{weather.feels_like_c.mean():.1f}°C');cs[2].metric('Weather days',len(weather))
  st.caption('Open-Meteo historical archive: hourly temperature_2m and apparent_temperature, aggregated to daily means in Europe/London time. These are gridded meteorological estimates, not direct warehouse sensor readings.')
