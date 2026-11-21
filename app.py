@@ -186,13 +186,18 @@ page=st.radio('Navigation',['Overview','Temperature trends','London weather','Da
 @st.cache_data
 
 def read_reconstruction():
-    # Self-contained fallback: deployed app works even if GitHub upload omits data/.
-    file_path = Path(__file__).resolve().parent / 'data' / 'chart_reconstruction.csv'
-    if file_path.is_file():
-        return pd.read_csv(file_path, parse_dates=['date'])
-    embedded = 'eNrF10FOwzAQBdA9EnfwAVLkcRInESt27OAGlUmGYimtg+2Icntip0hcAP9lpMavdWe+PZOJXEU+L+xNXD0fxyqwtxyq4FY/8vFzNbON3/d3Sip9IHmQVFH3oKtnG6LzdjSzCHwJzovbi0/L4t3VnreVhWcz2ctJTPZkow08iXfvziKsyzLb7Wn8MD6K7bMnfhQXF4U3X7/L8XVxPv6BVYJrAFyj4CbBCgC3CW4BsE5wA4C7BBMA7ivSkHYaEtyVh0mmrR4A8JZcPaKPSSUY0E6Uk6sHwA3okKAW1MekUzshqrpD9XFOLkRV5+QCHBJKgrZa5TsXAs7JBbiBqBp0SKhmj8xXF+L2LcTLGN0b/z/b7htdmtV7YZVmb5lVmu3Tr5XF2WGfHwqztYT8tzUBKpnyWJruWKXZHJCyOHuLx9IsIhwpj6P9duCXZjVmkztMSfWYvh32oawwuw+hxSr5BxzPvKY='
-    csv_bytes = zlib.decompress(base64.b64decode(embedded))
-    return pd.read_csv(io.BytesIO(csv_bytes), parse_dates=['date'])
+    # Prefer the current CSV in the repository root, then the data folder.
+    root = Path(__file__).resolve().parent
+    for file_path in (root / 'chart_reconstruction.csv', root / 'data' / 'chart_reconstruction.csv'):
+        if file_path.is_file():
+            data = pd.read_csv(file_path, parse_dates=['date'])
+            required = {'date', 'temperature_c', 'series', 'source_quality'}
+            if not required.issubset(data.columns):
+                raise ValueError(f'Missing CSV columns: {required - set(data.columns)}')
+            data['temperature_c'] = pd.to_numeric(data['temperature_c'], errors='coerce')
+            return data.dropna(subset=['date', 'temperature_c']).sort_values('date')
+    st.error('chart_reconstruction.csv not found. Add it beside app.py in GitHub.')
+    st.stop()
 
 @st.cache_data(ttl=21600,show_spinner=False)
 def weather_data(lat,lon,first,last):
@@ -206,8 +211,13 @@ def weather_data(lat,lon,first,last):
  return d.groupby('date',as_index=False)[['outside_c','feels_like_c']].mean()
 
 base=read_reconstruction()
+first_day = base.date.min().date()
+last_day = base.date.max().date()
 with st.expander('⚙ Filters & data upload',expanded=False):
- a,b,c=st.columns([2,1,1]);uploaded=a.file_uploader('Upload sensor data (CSV / Excel)',type=['csv','xlsx']);start=b.date_input('From',value=date(2026,10,1),min_value=date(2026,10,1),max_value=date(2026,11,10));end=c.date_input('To',value=date(2026,11,10),min_value=date(2026,10,1),max_value=date(2026,11,10))
+ a,b,c=st.columns([2,1,1])
+ uploaded=a.file_uploader('Upload sensor data (CSV / Excel)',type=['csv','xlsx'])
+ start=b.date_input('From',value=first_day,min_value=first_day,max_value=last_day)
+ end=c.date_input('To',value=last_day,min_value=first_day,max_value=last_day)
  st.caption('Weather: Central London · Outdoor conditions are shown for comparison only.')
 
 source='chart'
@@ -230,31 +240,44 @@ merged=df.merge(weather,on='date',how='left')
 
 st.markdown('<div style="margin:18px 0 5px;color:#59dfd0;font-size:.73rem;font-weight:700;letter-spacing:.14em">OPERATIONS / PERFORMANCE</div>',unsafe_allow_html=True)
 st.title({'Overview':'Casa Luker | Executive Intelligence','Temperature trends':'Chiller temperature trends','London weather':'London weather intelligence','Data & methodology':'Data management & methodology'}[page])
-st.caption(f'{start:%d %B} – {end:%d %B %Y}  ·  Target 18.0–20.0 °C  ·  {"Uploaded sensor file" if source=="uploaded" else "Chart-derived reconstruction"}')
+st.caption(f'{start:%d %B} – {end:%d %B %Y}  ·  Target 18.0–20.0 °C  ·  {"Uploaded sensor file" if source=="uploaded" else "Daily dataset with measured and estimated days"}')
 if source=='chart' and page!='Overview':
- st.markdown('<div style="background:#17334a;border:1px solid #315570;border-left:4px solid #59dfd0;border-radius:12px;padding:13px 17px;color:#fff;font-size:.89rem;line-height:1.55"><b>REPORT SNAPSHOT</b> &nbsp; · &nbsp; Mean <b>17.30°C</b> &nbsp; · &nbsp; Minimum <b>15.8°C</b> &nbsp; · &nbsp; Below target <b>80.5%</b><div style="font-size:.78rem;color:#e6f1fa;margin-top:5px">Reported sensor KPIs · Daily trend reconstructed from supplied chart; exact daily sensor readings not available.</div></div>',unsafe_allow_html=True)
+ estimated_days=int(df.series.eq('Estimated missing day').sum())
+ st.caption(f'Dataset: {len(df)} daily records · {estimated_days} estimated days (*) · remaining days labelled measured in source file. Source labels have not been independently verified.')
 if weather_error:st.warning('London weather is temporarily unavailable from Open-Meteo. Indoor data remains visible; no weather values have been substituted.')
 
 if page in ('Overview','Temperature trends'):
- if source=='chart' and start==date(2026,10,1) and end==date(2026,11,10):
-  cards=[('Reported sensor mean','17.30°C'),('Reported minimum','15.8°C'),('Reported below target','80.5%'),('Chart period','41 days')]
- else:
-  cards=[('Period mean*',f'{df.temperature_c.mean():.2f}°C'),('Period minimum*',f'{df.temperature_c.min():.1f}°C'),('Below 18°C*',f'{(df.temperature_c.lt(18).mean()*100):.1f}%'),('Days with data',f'{df.date.nunique()}')]
+ cards=[('Daily mean*',f'{df.temperature_c.mean():.2f}°C'),('Daily minimum*',f'{df.temperature_c.min():.1f}°C'),('Days below 18°C*',f'{(df.temperature_c.lt(18).mean()*100):.1f}%'),('Days in period',f'{df.date.nunique()}')]
  st.markdown('<div style="height:24px"></div>',unsafe_allow_html=True)
  with st.container(key='kpi_mobile'):
   cs=st.columns(4,gap='medium')
   for col,(label,val) in zip(cs,cards):col.metric(label,val)
- if source=='chart' and (start!=date(2026,10,1) or end!=date(2026,11,10)):st.caption('* Calculated from chart-digitised approximate points, not raw sensor measurements.')
- elif source=='uploaded':st.caption('* Calculated from the uploaded file.')
+ if source=='chart':st.caption('* Statistics use daily averages, including estimated missing days; they are not raw sensor-reading KPIs.')
+ elif source=='uploaded':st.caption('* Calculated from the uploaded file; authenticity not independently verified.')
 
 fig=go.Figure()
 fig.add_hrect(y0=18,y1=20,fillcolor='rgba(89,223,208,.12)',line_width=0)
 fig.add_hline(y=18,line=dict(color='rgba(89,223,208,.65)',dash='dot',width=1))
 fig.add_hline(y=20,line=dict(color='rgba(89,223,208,.65)',dash='dot',width=1))
-for label,color in [('Historical sensor series',SKY),('Post-23 October series',GOLD),('Uploaded sensor data',SKY)]:
- d=df[df.series==label]
- if d.empty:continue
- fig.add_trace(go.Scatter(x=d.date,y=d.temperature_c,mode='lines+markers',name=label,line=dict(color=color,width=3.3,shape='spline',smoothing=.65),marker=dict(size=5,color=color),hovertemplate='%{x|%d %b %Y}<br>%{y:.1f}°C'+('* · Chart-estimated value' if source=='chart' else ' · Uploaded data')+'<extra>'+label+'</extra>'))
+if source=='chart':
+ # One continuous daily curve; estimates are highlighted individually.
+ est=df.series.eq('Estimated missing day')
+ labels=['Estimated*' if flag else 'Measured (source-labelled)' for flag in est]
+ fig.add_trace(go.Scatter(
+  x=df.date,y=df.temperature_c,mode='lines+markers',name='Chiller daily temperature',
+  line=dict(color=SKY,width=3.3,shape='spline',smoothing=.65),
+  marker=dict(size=6,color=[GOLD if flag else SKY for flag in est]),
+  customdata=labels,
+  hovertemplate='%{x|%d %b %Y}<br>%{y:.2f}°C<br>%{customdata}<extra></extra>'))
+ if est.any():
+  d=df.loc[est]
+  fig.add_trace(go.Scatter(x=d.date,y=d.temperature_c,mode='text',text=['*']*len(d),
+   textposition='top center',textfont=dict(color=GOLD,size=17),
+   name='Estimated missing days (*)',hoverinfo='skip',showlegend=True))
+else:
+ fig.add_trace(go.Scatter(x=df.date,y=df.temperature_c,mode='lines+markers',
+  name='Uploaded sensor data',line=dict(color=SKY,width=3.3,shape='spline',smoothing=.65),
+  marker=dict(size=6,color=SKY),hovertemplate='%{x|%d %b %Y}<br>%{y:.2f}°C<extra></extra>'))
 # Weather series are real API values; absent on error.
 for col,label,color in [('outside_c','London outdoor temperature',AQUA),('feels_like_c','London feels-like temperature','#c0a7ff')]:
  if col in merged and merged[col].notna().any():
@@ -273,12 +296,12 @@ def show_responsive_trend():
   mobile_fig=go.Figure(fig)
   for tr in mobile_fig.data:
    name=tr.name
-   if choice=='Chiller + London air': show=name in ('Historical sensor series','Post-23 October series','Uploaded sensor data','London outdoor temperature')
-   elif choice=='Chiller only': show=name in ('Historical sensor series','Post-23 October series','Uploaded sensor data')
+   if choice=='Chiller + London air': show=name in ('Chiller daily temperature','Estimated missing days (*)','Uploaded sensor data','London outdoor temperature')
+   elif choice=='Chiller only': show=name in ('Chiller daily temperature','Estimated missing days (*)','Uploaded sensor data')
    elif choice=='London air + feels-like': show=name in ('London outdoor temperature','London feels-like temperature')
    else: show=True
    tr.visible=True if show else False
-   tr.mode='lines' if name.startswith('London') else 'lines+markers'
+   if name != 'Estimated missing days (*)': tr.mode='lines' if name.startswith('London') else 'lines+markers'
    if tr.line: tr.line.width=3.1 if not name.startswith('London') else 2.7
    if 'marker' in tr and tr.marker:tr.marker.size=3
   mobile_fig.update_layout(height=430,showlegend=True,margin=dict(l=5,r=6,t=20,b=72),
@@ -287,7 +310,7 @@ def show_responsive_trend():
    xaxis=dict(title='',showgrid=True,gridcolor='#263e56',tickformat='%d %b',nticks=5,tickfont=dict(size=11,color='#fff')),
    yaxis=dict(title='°C',showgrid=True,gridcolor='#263e56',tickfont=dict(size=11,color='#fff')))
   st.plotly_chart(mobile_fig,use_container_width=True,config={'responsive':True,'displaylogo':False,'displayModeBar':False,'scrollZoom':False})
-  st.caption(('* Chart-estimated daily values, not verified sensor readings. ' if source=='chart' else 'Uploaded sensor values (not independently verified). ') + 'Tap a point for its date and temperature; select another comparison above.')
+  st.caption(('* Gold markers and asterisks identify estimated missing days. ' if source=='chart' else 'Uploaded sensor values (not independently verified). ') + 'Tap a point for its date and temperature.')
 
 if page=='Overview':
  st.markdown('<div style="height:28px"></div>',unsafe_allow_html=True)
@@ -300,7 +323,7 @@ if page=='Overview':
 elif page=='Temperature trends':
  st.subheader('Daily evolution · smooth curve')
  show_responsive_trend()
- st.caption((' * Chart-estimated values are approximate, not raw sensor measurements. ' if source=='chart' else 'Uploaded values are not independently verified. ') + 'Spline smoothing changes the line drawing only; tap or hover to inspect daily values.')
+ st.caption(('* Estimated missing days are marked in gold; other days are labelled measured in the CSV. ' if source=='chart' else 'Uploaded values are not independently verified. ') + 'Spline smoothing affects appearance only.')
 elif page=='London weather':
  st.subheader('Chiller vs London outdoor conditions')
  show_responsive_trend()
@@ -309,8 +332,8 @@ elif page=='London weather':
  st.caption('Open-Meteo historical archive: hourly temperature_2m and apparent_temperature, aggregated to daily means in Europe/London time. These are gridded meteorological estimates, not direct warehouse sensor readings.')
 else:
  st.subheader('Source and audit trail')
- st.markdown('**Chart-derived reconstruction:** approximate points transcribed from the supplied graphic, with two distinct series. **Reported summary:** 17.30°C mean, 15.8°C minimum, 80.5% below 18°C, as printed on the graphic. **Weather:** Open-Meteo archive API, central London coordinates, hourly data aggregated to daily averages. No missing values are fabricated.')
- st.markdown('**To replace approximations with verified measurements:** upload the original sensor CSV/XLSX using the collapsed Data controls panel. The uploaded file is processed during this session and is not written to the project repository by this app.')
+ st.markdown('**Daily dataset:** source-labelled measured days and explicitly estimated missing days. Asterisks indicate estimated days. Summary statistics use daily values and must not be confused with raw sensor-reading statistics. **Weather:** Open-Meteo archive API, central London coordinates, hourly data aggregated to daily averages. No missing weather values are fabricated.')
+ st.markdown('**Source validation:** the file labels some days as measured, but its provenance has not been independently checked. Upload a verified sensor CSV/XLSX using Data controls if available. Session uploads are not saved to the repository.')
  st.dataframe(merged,use_container_width=True,hide_index=True)
  st.download_button('Download combined dataset (CSV)',merged.to_csv(index=False).encode('utf-8'),'dincer_temperature_london_combined.csv',mime='text/csv')
 
