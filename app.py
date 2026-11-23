@@ -391,4 +391,26 @@ if page!='Data & methodology':
  with st.expander('View and export source table'):
   st.dataframe(merged,use_container_width=True,hide_index=True)
   st.download_button('Export selected period (CSV)',merged.to_csv(index=False).encode('utf-8'),'dincer_temperature_london.csv',mime='text/csv')
+
+# Optional download of complete sensor readings
+st.markdown("### Raw sensor data")
+
+with st.expander("Download complete temperature records"):
+    st.caption(
+        "Access the complete timestamped sensor dataset "
+        "for independent review and auditing."
+    )
+
+    raw_file = Path(__file__).resolve().parent / "temperature_master.csv"
+
+    if raw_file.exists():
+        st.download_button(
+            label="⬇ Download full sensor data (CSV)",
+            data=raw_file.read_bytes(),
+            file_name="CasaLuker_Full_Sensor_Data.csv",
+            mime="text/csv",
+            use_container_width=True
+        )
+    else:
+        st.info("The detailed sensor dataset is not available.")
 st.markdown('<div style="border-top:1px solid #27435c;margin-top:30px;padding-top:14px;color:#ffffff;font-size:.72rem">CASA LUKER INTELLIGENCE · DİNÇER Logistics · Source-aware analytics</div>',unsafe_allow_html=True)
